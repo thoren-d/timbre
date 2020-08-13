@@ -1,4 +1,4 @@
-name: Test on Push
+name: Check Commit
 
 on: [push, pull_request]
 
