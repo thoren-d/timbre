@@ -1,6 +1,6 @@
 [package]
 name = "timbre"
-version = "0.1.0"
+version = "0.1.1"
 
 authors = ["Thoren Paulson <thoren.paulson@gmail.com>"]
 categories = ["multimedia::audio", "game-development"]
