@@ -13,5 +13,11 @@ readme = "README.md"
 repository = "https://github.com/Antigroup/timbre"
 
 [dependencies]
-sdl2 = { version = "0.34.0", features = ["bundled"] }
+sdl2 = "0.34.0"
 slotmap = "0.4.0"
+
+[features]
+default = ["sdl2/bundled"]
+
+[package.metadata.docs.rs]
+features = []
