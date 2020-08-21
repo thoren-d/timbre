@@ -1,6 +1,7 @@
 use crate::core::{AudioFormat, AudioSource, StreamState};
 
 use std::sync::{Arc, Mutex};
+use tracing::trace_span;
 
 pub struct LowPass {
     buffer: Vec<f32>,
@@ -37,6 +38,9 @@ impl AudioSource for LowPass {
     }
 
     fn read(&mut self, samples: &mut [f32]) -> StreamState {
+        let span = trace_span!("LowPass::read");
+        let _span = span.enter();
+
         let result = self.source.lock().unwrap().read(samples);
         let written = match result {
             StreamState::Good => samples.len(),

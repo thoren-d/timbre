@@ -3,6 +3,7 @@ use crate::core::{AudioFormat, AudioSource, StreamState};
 use slotmap::{DefaultKey, DenseSlotMap};
 
 use std::sync::{Arc, Mutex};
+use tracing::trace_span;
 
 pub struct BasicMixer {
     buffer: Vec<f32>,
@@ -43,6 +44,9 @@ impl AudioSource for BasicMixer {
     }
 
     fn read(&mut self, samples: &mut [f32]) -> StreamState {
+        let span = trace_span!("BasicMixer::read");
+        let _span = span.enter();
+
         if self.sources.is_empty() {
             samples.iter_mut().for_each(|sample| *sample = 0.0);
             return StreamState::Good;

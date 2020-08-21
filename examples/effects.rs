@@ -1,8 +1,12 @@
 use sdl2;
 use std::error::Error;
 use timbre::{effects::{HighPass, LowPass, BasicMixer, Echo}, decoders::WavDecoder, Share, drivers::Sdl2Output};
+use tracing_subscriber::prelude::*;
 
 fn main() -> Result<(), Box<dyn Error>> {
+    let (chrome_layer, _guard) = tracing_chrome::ChromeLayerBuilder::new().build();
+    tracing_subscriber::registry().with(chrome_layer).init();
+
     let sdl = sdl2::init()?;
     let audio = sdl.audio()?;
 

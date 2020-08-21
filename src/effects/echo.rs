@@ -1,6 +1,7 @@
 use crate::core::{AudioFormat, AudioSource, StreamState};
 
 use std::sync::{Arc, Mutex};
+use tracing::trace_span;
 
 pub struct Echo {
     source: Arc<Mutex<dyn AudioSource + Send>>,
@@ -30,6 +31,9 @@ impl AudioSource for Echo {
     }
 
     fn read(&mut self, samples: &mut [f32]) -> StreamState {
+        let span = trace_span!("Echo::read");
+        let _span = span.enter();
+
         let status = self.source.lock().unwrap().read(samples);
         let written = match status {
             StreamState::Good => samples.len(),

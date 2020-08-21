@@ -3,6 +3,7 @@ use crate::{AudioFormat, AudioSource, StreamState};
 use std::sync::{Arc, Mutex};
 
 use sdl2::audio::{AudioCallback, AudioFormatNum, AudioSpecDesired};
+use tracing::trace_span;
 
 struct Callback {
     pub format: AudioFormat,
@@ -12,6 +13,9 @@ struct Callback {
 impl AudioCallback for Callback {
     type Channel = f32;
     fn callback(&mut self, samples: &mut [Self::Channel]) {
+        let span = trace_span!("Sdl2Output::callback");
+        let _span = span.enter();
+
         if let Some(source) = &self.source {
             let mut source = source.lock().unwrap();
             if source.format() != self.format {

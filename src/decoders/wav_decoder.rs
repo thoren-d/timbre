@@ -3,6 +3,7 @@ use crate::{AudioFormat, AudioSource, StreamState};
 use sdl2::audio::{AudioFormatNum, AudioSpecWAV};
 
 use std::convert::TryInto;
+use tracing::trace_span;
 
 pub struct WavDecoder {
     data: Vec<f32>,
@@ -12,13 +13,11 @@ pub struct WavDecoder {
 
 impl WavDecoder {
     pub fn from_file(path: &str) -> Self {
-        let before = std::time::Instant::now();
-        let wav_data = AudioSpecWAV::load_wav(path).unwrap();
-        println!("load_wav took {:?} ms ", before.elapsed().as_millis());
+        let span = trace_span!("WavDecoder::from_file");
+        let _span = span.enter();
 
-        let before = std::time::Instant::now();
+        let wav_data = AudioSpecWAV::load_wav(path).unwrap();
         let data = convert_samples(wav_data.buffer(), wav_data.format);
-        println!("convert_samples took {:?} ms", before.elapsed().as_millis());
 
         let format = match wav_data.channels {
             1 => AudioFormat::Mono(wav_data.freq),

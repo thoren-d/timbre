@@ -2,3 +2,5 @@
 /target
 /out
 Cargo.lock
+
+trace-*.json

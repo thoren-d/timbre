@@ -4,6 +4,7 @@ use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 
 use sdl2::audio::{AudioCallback, AudioSpecDesired};
+use tracing::trace_span;
 
 pub struct Sdl2Input {
     device: sdl2::audio::AudioDevice<Callback>,
@@ -23,6 +24,9 @@ struct AudioSourceImpl {
 impl AudioCallback for Callback {
     type Channel = f32;
     fn callback(&mut self, samples: &mut [Self::Channel]) {
+        let span = trace_span!("Sdl2Input::callback");
+        let _span = span.enter();
+
         self.buffer.lock().unwrap().extend(samples.iter().cloned());
     }
 }
@@ -73,6 +77,9 @@ impl AudioSource for AudioSourceImpl {
     }
 
     fn read(&mut self, samples: &mut [f32]) -> StreamState {
+        let span = trace_span!("Sdl2Input::read");
+        let _span = span.enter();
+
         let mut buffer = self.buffer.lock().unwrap();
 
         let mut i: usize = 0;
