@@ -1,4 +1,3 @@
-use sdl2;
 use std::error::Error;
 use timbre::{
     decoders::WavDecoder,
