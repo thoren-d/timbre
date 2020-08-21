@@ -31,7 +31,7 @@ impl Sdl2Input {
     pub fn new(subsystem: &sdl2::AudioSubsystem) -> Self {
         let desired_spec = AudioSpecDesired {
             freq: Some(44100),
-            channels: Some(1),
+            channels: Some(2),
             samples: None,
         };
 
