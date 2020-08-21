@@ -1,37 +1,9 @@
 use std::sync::{Arc, Mutex};
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum AudioFormat {
     Mono(i32),
     Stereo(i32),
-}
-
-impl Clone for AudioFormat {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-impl Copy for AudioFormat {}
-
-impl PartialEq for AudioFormat {
-    fn eq(&self, other: &Self) -> bool {
-        use AudioFormat::{Mono, Stereo};
-        match self {
-            Mono(n) => {
-                if let Mono(p) = other {
-                    p == n
-                } else {
-                    false
-                }
-            }
-            Stereo(n) => {
-                if let Stereo(p) = other {
-                    p == n
-                } else {
-                    false
-                }
-            }
-        }
-    }
 }
 
 #[derive(Debug)]
