@@ -12,6 +12,8 @@ license = "MIT"
 readme = "README.md"
 repository = "https://github.com/Antigroup/timbre"
 
+exclude = ["/assets"]
+
 [dependencies]
 sdl2 = "0.34.0"
 slotmap = "0.4.0"
