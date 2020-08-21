@@ -1,3 +1,5 @@
+.cargo/
 /target
+/out
 Cargo.lock
 *.wav
