@@ -1,6 +1,9 @@
 use sdl2;
 use std::error::Error;
-use timbre::{self, drivers::{Sdl2Output, Sdl2Input}, };
+use timbre::{
+    self,
+    drivers::{Sdl2Input, Sdl2Output},
+};
 use tracing_subscriber::prelude::*;
 
 fn main() -> Result<(), Box<dyn Error>> {

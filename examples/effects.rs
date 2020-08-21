@@ -1,6 +1,11 @@
 use sdl2;
 use std::error::Error;
-use timbre::{effects::{HighPass, LowPass, BasicMixer, Echo}, decoders::WavDecoder, Share, drivers::Sdl2Output};
+use timbre::{
+    decoders::WavDecoder,
+    drivers::Sdl2Output,
+    effects::{BasicMixer, Echo, HighPass, LowPass},
+    Share,
+};
 use tracing_subscriber::prelude::*;
 
 fn main() -> Result<(), Box<dyn Error>> {
