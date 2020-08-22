@@ -46,7 +46,7 @@ impl AudioSource for WavDecoder {
             self.position += samples.len();
             StreamState::Good
         } else {
-            samples.copy_from_slice(&self.data[self.position..self.data.len()]);
+            samples[..remaining].copy_from_slice(&self.data[self.position..self.data.len()]);
             self.position = self.data.len();
             StreamState::Finished(remaining)
         }
