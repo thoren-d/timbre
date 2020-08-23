@@ -1,4 +1,7 @@
-use crate::core::{AudioFormat, AudioSource, StreamState};
+use crate::{
+    core::{AudioFormat, AudioSource},
+    ReadResult,
+};
 
 use std::sync::{Arc, Mutex};
 use tracing::trace_span;
@@ -26,20 +29,16 @@ impl Echo {
 }
 
 impl AudioSource for Echo {
-    fn format(&mut self) -> AudioFormat {
-        self.source.lock().unwrap().format()
+    fn request_format(&mut self, format: Option<AudioFormat>) -> AudioFormat {
+        self.source.lock().unwrap().request_format(format)
     }
 
-    fn read(&mut self, samples: &mut [f32]) -> StreamState {
+    fn read(&mut self, samples: &mut [f32]) -> ReadResult {
         let span = trace_span!("Echo::read");
         let _span = span.enter();
 
         let status = self.source.lock().unwrap().read(samples);
-        let written = match status {
-            StreamState::Good => samples.len(),
-            StreamState::Finished(n) => n,
-            StreamState::Underrun(n) => n,
-        };
+        let written = status.read;
 
         echo(
             &mut self.buffer,

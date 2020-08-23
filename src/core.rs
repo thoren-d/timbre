@@ -1,29 +1,58 @@
 use std::sync::{Arc, Mutex};
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum AudioFormat {
-    Mono(i32),
-    Stereo(i32),
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
+pub struct AudioFormat {
+    pub channels: u32,
+    pub sample_rate: u32,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum StreamState {
     Good,
-    Underrun(usize),
-    Finished(usize),
+    Underrun,
+    Finished,
 }
 
-pub trait AudioSource {
-    fn format(&mut self) -> AudioFormat;
-    fn read(&mut self, samples: &mut [f32]) -> StreamState;
+#[derive(Debug, Eq, PartialEq)]
+pub struct ReadResult {
+    pub state: StreamState,
+    pub read: usize,
 }
 
-pub trait Share {
-    fn share(self) -> Arc<Mutex<Self>>;
+impl ReadResult {
+    pub fn good(read: usize) -> Self {
+        ReadResult {
+            state: StreamState::Good,
+            read,
+        }
+    }
+
+    pub fn underrun(read: usize) -> Self {
+        ReadResult {
+            state: StreamState::Underrun,
+            read,
+        }
+    }
+
+    pub fn finished(read: usize) -> Self {
+        ReadResult {
+            state: StreamState::Finished,
+            read,
+        }
+    }
 }
 
-impl<T: AudioSource + Send> Share for T {
-    fn share(self) -> Arc<Mutex<Self>> {
+pub trait AudioSource: Send + 'static {
+    fn request_format(&mut self, format: Option<AudioFormat>) -> AudioFormat;
+    fn read(&mut self, samples: &mut [f32]) -> ReadResult;
+}
+
+pub trait IntoShared {
+    fn into_shared(self) -> Arc<Mutex<dyn AudioSource + Send>>;
+}
+
+impl<T: AudioSource + Send> IntoShared for T {
+    fn into_shared(self) -> Arc<Mutex<dyn AudioSource + Send>> {
         Arc::new(Mutex::new(self))
     }
 }

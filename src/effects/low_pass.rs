@@ -1,4 +1,7 @@
-use crate::core::{AudioFormat, AudioSource, StreamState};
+use crate::{
+    core::{AudioFormat, AudioSource},
+    ReadResult,
+};
 
 use std::sync::{Arc, Mutex};
 use tracing::trace_span;
@@ -11,8 +14,8 @@ pub struct LowPass {
 }
 
 impl LowPass {
-    pub fn new(source: Arc<Mutex<dyn AudioSource + Send>>, cutoff: f32) -> Self {
-        let format = source.lock().unwrap().format();
+    pub fn new(source: Arc<Mutex<dyn AudioSource + Send + 'static>>, cutoff: f32) -> Self {
+        let format = source.lock().unwrap().request_format(None);
         let buffer = Vec::new();
         let rc = 1.0 / (2.0 * std::f32::consts::PI * cutoff);
         LowPass {
@@ -33,28 +36,24 @@ impl LowPass {
 }
 
 impl AudioSource for LowPass {
-    fn format(&mut self) -> AudioFormat {
+    fn request_format(&mut self, _format: Option<AudioFormat>) -> AudioFormat {
         self.format
     }
 
-    fn read(&mut self, samples: &mut [f32]) -> StreamState {
+    fn read(&mut self, samples: &mut [f32]) -> ReadResult {
         let span = trace_span!("LowPass::read");
         let _span = span.enter();
 
         let result = self.source.lock().unwrap().read(samples);
-        let written = match result {
-            StreamState::Good => samples.len(),
-            StreamState::Finished(n) => n,
-            StreamState::Underrun(n) => n,
-        };
+        let written = result.read;
         if written == 0 {
             return result;
         }
         self.buffer.resize(samples.len(), 0.0);
 
-        match self.format {
-            AudioFormat::Mono(sample_rate) => {
-                let dt = 1.0 / sample_rate as f32;
+        match self.format.channels {
+            1 => {
+                let dt = 1.0 / self.format.sample_rate as f32;
                 filter_mono(
                     &mut samples[..written],
                     &mut self.buffer[..written],
@@ -62,8 +61,8 @@ impl AudioSource for LowPass {
                     self.rc,
                 );
             }
-            AudioFormat::Stereo(sample_rate) => {
-                let dt = 1.0 / sample_rate as f32;
+            2 => {
+                let dt = 1.0 / self.format.sample_rate as f32;
                 filter_stereo(
                     &mut samples[..written],
                     &mut self.buffer[..written],
@@ -71,6 +70,7 @@ impl AudioSource for LowPass {
                     self.rc,
                 );
             }
+            _ => panic!("Unsupported channel count."),
         }
 
         result

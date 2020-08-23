@@ -1,4 +1,4 @@
-use crate::{AudioFormat, AudioSource, StreamState};
+use crate::{AudioFormat, AudioSource, ReadResult};
 
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
@@ -72,11 +72,11 @@ impl Sdl2Input {
 }
 
 impl AudioSource for AudioSourceImpl {
-    fn format(&mut self) -> AudioFormat {
+    fn request_format(&mut self, _format: Option<AudioFormat>) -> AudioFormat {
         self.format
     }
 
-    fn read(&mut self, samples: &mut [f32]) -> StreamState {
+    fn read(&mut self, samples: &mut [f32]) -> ReadResult {
         let span = trace_span!("Sdl2Input::read");
         let _span = span.enter();
 
@@ -87,11 +87,11 @@ impl AudioSource for AudioSourceImpl {
             if let Some(sample) = buffer.pop_front() {
                 samples[i] = sample;
             } else {
-                return StreamState::Underrun(i);
+                return ReadResult::underrun(i);
             }
             i += 1;
         }
 
-        StreamState::Good
+        ReadResult::good(samples.len())
     }
 }

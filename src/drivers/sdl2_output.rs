@@ -3,7 +3,7 @@ use crate::{AudioFormat, AudioSource, StreamState};
 use std::sync::{Arc, Mutex};
 
 use sdl2::audio::{AudioCallback, AudioFormatNum, AudioSpecDesired};
-use tracing::trace_span;
+use tracing::{trace_span, warn};
 
 struct Callback {
     pub format: AudioFormat,
@@ -18,28 +18,20 @@ impl AudioCallback for Callback {
 
         if let Some(source) = &self.source {
             let mut source = source.lock().unwrap();
-            if source.format() != self.format {
+            if source.request_format(Some(self.format)) != self.format {
                 panic!("Incompatible source format.");
             }
 
             let result = source.read(samples);
 
-            match result {
-                StreamState::Good => {}
-                StreamState::Underrun(n) => {
-                    println!("Underrun detected.");
-                    samples
-                        .iter_mut()
-                        .skip(n)
-                        .for_each(|sample| *sample = AudioFormatNum::SILENCE);
-                }
-                StreamState::Finished(n) => {
-                    samples
-                        .iter_mut()
-                        .skip(n)
-                        .for_each(|sample| *sample = AudioFormatNum::SILENCE);
-                }
+            if result.state == StreamState::Underrun {
+                warn!("Underrun detected.");
             }
+
+            samples
+                .iter_mut()
+                .skip(result.read)
+                .for_each(|s| *s = AudioFormatNum::SILENCE);
         } else {
             for sample in samples.iter_mut() {
                 *sample = AudioFormatNum::SILENCE;

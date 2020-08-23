@@ -1,4 +1,7 @@
-use crate::core::{AudioFormat, AudioSource, StreamState};
+use crate::{
+    core::{AudioFormat, AudioSource},
+    ReadResult,
+};
 
 use slotmap::{DefaultKey, DenseSlotMap};
 
@@ -27,7 +30,7 @@ impl BasicMixer {
     }
 
     pub fn add_source(&mut self, source: Arc<Mutex<dyn AudioSource + Send>>) -> BasicMixerSource {
-        assert!(source.lock().unwrap().format() == self.format);
+        assert!(source.lock().unwrap().request_format(None) == self.format);
         BasicMixerSource {
             key: self.sources.insert(source),
         }
@@ -39,38 +42,31 @@ impl BasicMixer {
 }
 
 impl AudioSource for BasicMixer {
-    fn format(&mut self) -> AudioFormat {
+    fn request_format(&mut self, _format: Option<AudioFormat>) -> AudioFormat {
         self.format
     }
 
-    fn read(&mut self, samples: &mut [f32]) -> StreamState {
+    fn read(&mut self, samples: &mut [f32]) -> ReadResult {
         let span = trace_span!("BasicMixer::read");
         let _span = span.enter();
 
         if self.sources.is_empty() {
             samples.iter_mut().for_each(|sample| *sample = 0.0);
-            return StreamState::Good;
+            return ReadResult::good(samples.len());
         }
 
         let mut iter = self.sources.iter_mut();
         let (_, first) = iter.next().unwrap();
-        let mut written = match first.lock().unwrap().read(samples) {
-            StreamState::Good => samples.len(),
-            StreamState::Finished(n) => n,
-            StreamState::Underrun(n) => n,
-        };
+        let ReadResult {
+            mut read,
+            state: _state,
+        } = first.lock().unwrap().read(samples);
 
         for (_, source) in iter {
             self.buffer.resize(samples.len(), 0.0);
 
-            written = std::cmp::max(
-                written,
-                match source.lock().unwrap().read(&mut self.buffer[..]) {
-                    StreamState::Good => samples.len(),
-                    StreamState::Finished(n) => n,
-                    StreamState::Underrun(n) => n,
-                },
-            );
+            let result = source.lock().unwrap().read(&mut self.buffer[..]);
+            read = std::cmp::max(read, result.read);
 
             samples
                 .iter_mut()
@@ -82,10 +78,10 @@ impl AudioSource for BasicMixer {
             samples.iter_mut().for_each(|sample| *sample *= coef);
         }
 
-        if written < samples.len() {
-            StreamState::Underrun(written)
+        if read < samples.len() {
+            ReadResult::underrun(read)
         } else {
-            StreamState::Good
+            ReadResult::good(samples.len())
         }
     }
 }
