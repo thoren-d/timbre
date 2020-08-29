@@ -1,13 +1,12 @@
 use crate::{
-    core::{AudioFormat, AudioSource},
+    core::{AudioFormat, AudioSource, SharedAudioSource},
     ReadResult,
 };
 
-use std::sync::{Arc, Mutex};
 use tracing::trace_span;
 
 pub struct Echo {
-    source: Arc<Mutex<dyn AudioSource + Send>>,
+    source: SharedAudioSource,
     delay: usize,
     decay: f32,
     buffer: Vec<f32>,
@@ -15,7 +14,7 @@ pub struct Echo {
 }
 
 impl Echo {
-    pub fn new(source: Arc<Mutex<dyn AudioSource + Send>>, delay: usize, decay: f32) -> Self {
+    pub fn new(source: SharedAudioSource, delay: usize, decay: f32) -> Self {
         let mut buffer = Vec::new();
         buffer.resize(delay, 0.0);
         Echo {

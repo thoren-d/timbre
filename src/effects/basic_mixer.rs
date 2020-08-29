@@ -1,18 +1,17 @@
 use crate::{
-    core::{AudioFormat, AudioSource},
+    core::{AudioFormat, AudioSource, SharedAudioSource},
     ReadResult,
 };
 
 use slotmap::{DefaultKey, DenseSlotMap};
 
-use std::sync::{Arc, Mutex};
 use tracing::trace_span;
 
 pub struct BasicMixer {
     buffer: Vec<f32>,
     coefficient: Option<f32>,
     format: AudioFormat,
-    sources: DenseSlotMap<DefaultKey, Arc<Mutex<dyn AudioSource + Send>>>,
+    sources: DenseSlotMap<DefaultKey, SharedAudioSource>,
 }
 
 pub struct BasicMixerSource {
@@ -29,7 +28,7 @@ impl BasicMixer {
         }
     }
 
-    pub fn add_source(&mut self, source: Arc<Mutex<dyn AudioSource + Send>>) -> BasicMixerSource {
+    pub fn add_source(&mut self, source: SharedAudioSource) -> BasicMixerSource {
         assert!(source.lock().unwrap().request_format(None) == self.format);
         BasicMixerSource {
             key: self.sources.insert(source),

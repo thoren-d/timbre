@@ -1,4 +1,4 @@
-use crate::{AudioFormat, AudioSource, ReadResult};
+use crate::{core::SharedAudioSource, AudioFormat, AudioSource, ReadResult};
 
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
@@ -55,7 +55,7 @@ impl Sdl2Input {
         Sdl2Input { device, buffer }
     }
 
-    pub fn source(&mut self) -> Arc<Mutex<dyn AudioSource + Send>> {
+    pub fn source(&mut self) -> SharedAudioSource {
         Arc::new(Mutex::new(AudioSourceImpl {
             buffer: self.buffer.clone(),
             format: self.device.lock().format,

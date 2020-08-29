@@ -1,13 +1,11 @@
-use crate::{AudioFormat, AudioSource, StreamState};
-
-use std::sync::{Arc, Mutex};
+use crate::{core::SharedAudioSource, AudioFormat, StreamState};
 
 use sdl2::audio::{AudioCallback, AudioFormatNum, AudioSpecDesired};
 use tracing::{trace_span, warn};
 
 struct Callback {
     pub format: AudioFormat,
-    pub source: Option<Arc<Mutex<dyn AudioSource + Send>>>,
+    pub source: Option<SharedAudioSource>,
 }
 
 impl AudioCallback for Callback {
@@ -66,7 +64,7 @@ impl Sdl2Output {
         Sdl2Output { device }
     }
 
-    pub fn set_source(&mut self, source: Arc<Mutex<dyn AudioSource + Send>>) {
+    pub fn set_source(&mut self, source: SharedAudioSource) {
         self.device.lock().source = Some(source);
     }
 

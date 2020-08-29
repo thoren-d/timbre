@@ -1,20 +1,19 @@
 use crate::{
-    core::{AudioFormat, AudioSource},
+    core::{AudioFormat, AudioSource, SharedAudioSource},
     ReadResult,
 };
 
-use std::sync::{Arc, Mutex};
 use tracing::trace_span;
 
 pub struct LowPass {
     buffer: Vec<f32>,
     format: AudioFormat,
     rc: f32,
-    source: Arc<Mutex<dyn AudioSource + Send>>,
+    source: SharedAudioSource,
 }
 
 impl LowPass {
-    pub fn new(source: Arc<Mutex<dyn AudioSource + Send + 'static>>, cutoff: f32) -> Self {
+    pub fn new(source: SharedAudioSource, cutoff: f32) -> Self {
         let format = source.lock().unwrap().request_format(None);
         let buffer = Vec::new();
         let rc = 1.0 / (2.0 * std::f32::consts::PI * cutoff);

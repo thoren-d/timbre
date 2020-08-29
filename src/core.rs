@@ -42,17 +42,19 @@ impl ReadResult {
     }
 }
 
-pub trait AudioSource: Send + 'static {
+pub trait AudioSource {
     fn request_format(&mut self, format: Option<AudioFormat>) -> AudioFormat;
     fn read(&mut self, samples: &mut [f32]) -> ReadResult;
 }
 
+pub type SharedAudioSource = Arc<Mutex<dyn AudioSource + Send>>;
+
 pub trait IntoShared {
-    fn into_shared(self) -> Arc<Mutex<dyn AudioSource + Send>>;
+    fn into_shared(self) -> SharedAudioSource;
 }
 
-impl<T: AudioSource + Send> IntoShared for T {
-    fn into_shared(self) -> Arc<Mutex<dyn AudioSource + Send>> {
+impl<T: AudioSource + Send + 'static> IntoShared for T {
+    fn into_shared(self) -> SharedAudioSource {
         Arc::new(Mutex::new(self))
     }
 }
