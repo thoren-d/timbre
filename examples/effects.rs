@@ -3,7 +3,7 @@ use timbre::{
     decoders::WavDecoder,
     drivers::Sdl2Output,
     effects::{BasicMixer, Echo, HighPass, LowPass},
-    AudioFormat, IntoShared,
+    IntoShared,
 };
 use tracing_subscriber::prelude::*;
 
@@ -20,13 +20,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let low_pass = LowPass::new(track1.into_shared(), 300.0);
     let high_pass = HighPass::new(track2.into_shared(), 4000.0);
 
-    let mut mixer = BasicMixer::new(
-        AudioFormat {
-            channels: 2,
-            sample_rate: 44100,
-        },
-        Some(0.33),
-    );
+    let mut mixer = BasicMixer::new();
     mixer.add_source(low_pass.into_shared());
     mixer.add_source(high_pass.into_shared());
 
