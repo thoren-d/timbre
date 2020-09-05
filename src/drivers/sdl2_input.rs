@@ -7,7 +7,7 @@ use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 
 use sdl2::audio::{AudioCallback, AudioSpecDesired};
-use tracing::trace_span;
+use tracing::{info, trace_span};
 
 pub struct Sdl2Input {
     device: sdl2::audio::AudioDevice<Callback>,
@@ -36,17 +36,27 @@ impl AudioCallback for Callback {
 
 impl Sdl2Input {
     pub fn new(subsystem: &sdl2::AudioSubsystem) -> Self {
+        Sdl2Input::with_format(
+            subsystem,
+            AudioFormat {
+                channels: 2,
+                sample_rate: 44100,
+            },
+        )
+    }
+
+    pub fn with_format(subsystem: &sdl2::AudioSubsystem, format: AudioFormat) -> Self {
         let desired_spec = AudioSpecDesired {
-            freq: Some(44100),
-            channels: Some(2),
-            samples: None,
+            freq: Some(format.sample_rate as i32),
+            channels: Some(format.channels),
+            samples: Some(1024),
         };
 
         let buffer = Arc::new(Mutex::new(VecDeque::new()));
 
         let device = subsystem
             .open_capture(None, &desired_spec, |spec| {
-                println!("Input Spec: {:?}", spec);
+                info!("Input Spec: {:?}", spec);
 
                 Callback {
                     buffer: buffer.clone(),
@@ -58,9 +68,13 @@ impl Sdl2Input {
         Sdl2Input { device, buffer }
     }
 
+    pub fn format(&mut self) -> AudioFormat {
+        self.device.lock().format
+    }
+
     pub fn source(&mut self) -> SharedAudioSource {
         Arc::new(Mutex::new(AudioSourceImpl {
-            buffer: self.buffer.clone(),
+            buffer: Arc::clone(&self.buffer),
             format: self.device.lock().format,
         }))
     }
