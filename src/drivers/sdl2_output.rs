@@ -1,13 +1,14 @@
-use crate::{AudioFormat, AudioSource, StreamState};
-
-use std::sync::{Arc, Mutex};
+use crate::{
+    core::{AudioBuffer, SharedAudioSource},
+    AudioFormat, StreamState,
+};
 
 use sdl2::audio::{AudioCallback, AudioFormatNum, AudioSpecDesired};
-use tracing::trace_span;
+use tracing::{trace_span, warn};
 
 struct Callback {
     pub format: AudioFormat,
-    pub source: Option<Arc<Mutex<dyn AudioSource + Send>>>,
+    pub source: Option<SharedAudioSource>,
 }
 
 impl AudioCallback for Callback {
@@ -18,28 +19,18 @@ impl AudioCallback for Callback {
 
         if let Some(source) = &self.source {
             let mut source = source.lock().unwrap();
-            if source.format() != self.format {
-                panic!("Incompatible source format.");
+
+            let mut buffer = AudioBuffer::new(self.format, samples);
+            let result = source.read(&mut buffer);
+
+            if result.state == StreamState::Underrun {
+                warn!("Underrun detected.");
             }
 
-            let result = source.read(samples);
-
-            match result {
-                StreamState::Good => {}
-                StreamState::Underrun(n) => {
-                    println!("Underrun detected.");
-                    samples
-                        .iter_mut()
-                        .skip(n)
-                        .for_each(|sample| *sample = AudioFormatNum::SILENCE);
-                }
-                StreamState::Finished(n) => {
-                    samples
-                        .iter_mut()
-                        .skip(n)
-                        .for_each(|sample| *sample = AudioFormatNum::SILENCE);
-                }
-            }
+            samples
+                .iter_mut()
+                .skip(result.read)
+                .for_each(|s| *s = AudioFormatNum::SILENCE);
         } else {
             for sample in samples.iter_mut() {
                 *sample = AudioFormatNum::SILENCE;
@@ -74,7 +65,7 @@ impl Sdl2Output {
         Sdl2Output { device }
     }
 
-    pub fn set_source(&mut self, source: Arc<Mutex<dyn AudioSource + Send>>) {
+    pub fn set_source(&mut self, source: SharedAudioSource) {
         self.device.lock().source = Some(source);
     }
 

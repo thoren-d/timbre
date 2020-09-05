@@ -1,4 +1,4 @@
-use crate::{AudioFormat, AudioSource, StreamState};
+use crate::{core::AudioBuffer, AudioFormat, AudioSource, ReadResult};
 
 use sdl2::audio::{AudioFormatNum, AudioSpecWAV};
 
@@ -19,10 +19,9 @@ impl WavDecoder {
         let wav_data = AudioSpecWAV::load_wav(path).unwrap();
         let data = convert_samples(wav_data.buffer(), wav_data.format);
 
-        let format = match wav_data.channels {
-            1 => AudioFormat::Mono(wav_data.freq),
-            2 => AudioFormat::Stereo(wav_data.freq),
-            _ => panic!("Unsupported channel count."),
+        let format = AudioFormat {
+            channels: wav_data.channels,
+            sample_rate: wav_data.freq as u32,
         };
 
         WavDecoder {
@@ -34,21 +33,19 @@ impl WavDecoder {
 }
 
 impl AudioSource for WavDecoder {
-    fn format(&mut self) -> AudioFormat {
-        self.format
-    }
-
-    fn read(&mut self, samples: &mut [f32]) -> StreamState {
+    fn read(&mut self, buffer: &mut AudioBuffer) -> ReadResult {
+        assert!(self.format == buffer.format);
+        let samples = &mut buffer.samples;
         let remaining = self.data.len() - self.position;
 
         if samples.len() <= remaining {
             samples.copy_from_slice(&self.data[self.position..self.position + samples.len()]);
             self.position += samples.len();
-            StreamState::Good
+            ReadResult::good(samples.len())
         } else {
             samples[..remaining].copy_from_slice(&self.data[self.position..self.data.len()]);
             self.position = self.data.len();
-            StreamState::Finished(remaining)
+            ReadResult::finished(remaining)
         }
     }
 }

@@ -1,24 +1,23 @@
-use crate::core::{AudioFormat, AudioSource, StreamState};
+use crate::{
+    core::{AudioBuffer, AudioSource, SharedAudioSource},
+    ReadResult,
+};
 
-use std::sync::{Arc, Mutex};
 use tracing::trace_span;
 
 pub struct HighPass {
     buffer: Vec<f32>,
-    format: AudioFormat,
     rc: f32,
-    source: Arc<Mutex<dyn AudioSource + Send>>,
+    source: SharedAudioSource,
     prev: [f32; 2],
 }
 
 impl HighPass {
-    pub fn new(source: Arc<Mutex<dyn AudioSource + Send>>, cutoff: f32) -> Self {
-        let format = source.lock().unwrap().format();
+    pub fn new(source: SharedAudioSource, cutoff: f32) -> Self {
         let buffer = Vec::new();
         let rc = 1.0 / (2.0 * std::f32::consts::PI * cutoff);
         HighPass {
             buffer,
-            format,
             rc,
             source,
             prev: [0.0, 0.0],
@@ -27,46 +26,39 @@ impl HighPass {
 }
 
 impl AudioSource for HighPass {
-    fn format(&mut self) -> AudioFormat {
-        self.format
-    }
-
-    fn read(&mut self, samples: &mut [f32]) -> StreamState {
+    fn read(&mut self, buffer: &mut AudioBuffer) -> ReadResult {
         let span = trace_span!("HighPass::read");
         let _span = span.enter();
 
-        let result = self.source.lock().unwrap().read(samples);
-        let written = match result {
-            StreamState::Good => samples.len(),
-            StreamState::Finished(n) => n,
-            StreamState::Underrun(n) => n,
-        };
+        let result = self.source.lock().unwrap().read(buffer);
+        let written = result.read;
         if written == 0 {
             return result;
         }
-        self.buffer.resize(samples.len(), 0.0);
+        self.buffer.resize(buffer.samples.len(), 0.0);
 
-        match self.format {
-            AudioFormat::Mono(sample_rate) => {
-                let dt = 1.0 / sample_rate as f32;
+        match buffer.format.channels {
+            1 => {
+                let dt = 1.0 / buffer.format.sample_rate as f32;
                 self.prev = filter_mono(
-                    &mut samples[..written],
+                    &mut buffer.samples[..written],
                     &mut self.buffer[..written],
                     dt,
                     self.rc,
                     self.prev,
                 );
             }
-            AudioFormat::Stereo(sample_rate) => {
-                let dt = 1.0 / sample_rate as f32;
+            2 => {
+                let dt = 1.0 / buffer.format.sample_rate as f32;
                 self.prev = filter_stereo(
-                    &mut samples[..written],
+                    &mut buffer.samples[..written],
                     &mut self.buffer[..written],
                     dt,
                     self.rc,
                     self.prev,
                 );
             }
+            _ => panic!("Unsupported channel count."),
         }
 
         result

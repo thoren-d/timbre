@@ -1,10 +1,12 @@
-use crate::core::{AudioFormat, AudioSource, StreamState};
+use crate::{
+    core::{AudioBuffer, AudioSource, SharedAudioSource},
+    ReadResult,
+};
 
-use std::sync::{Arc, Mutex};
 use tracing::trace_span;
 
 pub struct Echo {
-    source: Arc<Mutex<dyn AudioSource + Send>>,
+    source: SharedAudioSource,
     delay: usize,
     decay: f32,
     buffer: Vec<f32>,
@@ -12,7 +14,7 @@ pub struct Echo {
 }
 
 impl Echo {
-    pub fn new(source: Arc<Mutex<dyn AudioSource + Send>>, delay: usize, decay: f32) -> Self {
+    pub fn new(source: SharedAudioSource, delay: usize, decay: f32) -> Self {
         let mut buffer = Vec::new();
         buffer.resize(delay, 0.0);
         Echo {
@@ -26,24 +28,16 @@ impl Echo {
 }
 
 impl AudioSource for Echo {
-    fn format(&mut self) -> AudioFormat {
-        self.source.lock().unwrap().format()
-    }
-
-    fn read(&mut self, samples: &mut [f32]) -> StreamState {
+    fn read(&mut self, buffer: &mut AudioBuffer) -> ReadResult {
         let span = trace_span!("Echo::read");
         let _span = span.enter();
 
-        let status = self.source.lock().unwrap().read(samples);
-        let written = match status {
-            StreamState::Good => samples.len(),
-            StreamState::Finished(n) => n,
-            StreamState::Underrun(n) => n,
-        };
+        let status = self.source.lock().unwrap().read(buffer);
+        let written = status.read;
 
         echo(
             &mut self.buffer,
-            samples,
+            buffer.samples,
             written,
             &mut self.position,
             self.delay,
