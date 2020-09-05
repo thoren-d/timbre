@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct AudioFormat {
-    pub channels: u32,
+    pub channels: u8,
     pub sample_rate: u32,
 }
 
@@ -42,9 +42,21 @@ impl ReadResult {
     }
 }
 
+pub type Sample = f32;
+
+pub struct AudioBuffer<'a> {
+    pub samples: &'a mut [Sample],
+    pub format: AudioFormat,
+}
+
+impl<'a> AudioBuffer<'a> {
+    pub fn new(format: AudioFormat, samples: &'a mut [Sample]) -> Self {
+        AudioBuffer { format, samples }
+    }
+}
+
 pub trait AudioSource {
-    fn request_format(&mut self, format: Option<AudioFormat>) -> AudioFormat;
-    fn read(&mut self, samples: &mut [f32]) -> ReadResult;
+    fn read(&mut self, buffer: &mut AudioBuffer) -> ReadResult;
 }
 
 pub type SharedAudioSource = Arc<Mutex<dyn AudioSource + Send>>;

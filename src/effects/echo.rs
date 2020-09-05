@@ -1,5 +1,5 @@
 use crate::{
-    core::{AudioFormat, AudioSource, SharedAudioSource},
+    core::{AudioBuffer, AudioSource, SharedAudioSource},
     ReadResult,
 };
 
@@ -28,20 +28,16 @@ impl Echo {
 }
 
 impl AudioSource for Echo {
-    fn request_format(&mut self, format: Option<AudioFormat>) -> AudioFormat {
-        self.source.lock().unwrap().request_format(format)
-    }
-
-    fn read(&mut self, samples: &mut [f32]) -> ReadResult {
+    fn read(&mut self, buffer: &mut AudioBuffer) -> ReadResult {
         let span = trace_span!("Echo::read");
         let _span = span.enter();
 
-        let status = self.source.lock().unwrap().read(samples);
+        let status = self.source.lock().unwrap().read(buffer);
         let written = status.read;
 
         echo(
             &mut self.buffer,
-            samples,
+            buffer.samples,
             written,
             &mut self.position,
             self.delay,

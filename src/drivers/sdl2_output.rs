@@ -1,4 +1,7 @@
-use crate::{core::SharedAudioSource, AudioFormat, StreamState};
+use crate::{
+    core::{AudioBuffer, SharedAudioSource},
+    AudioFormat, StreamState,
+};
 
 use sdl2::audio::{AudioCallback, AudioFormatNum, AudioSpecDesired};
 use tracing::{trace_span, warn};
@@ -16,11 +19,9 @@ impl AudioCallback for Callback {
 
         if let Some(source) = &self.source {
             let mut source = source.lock().unwrap();
-            if source.request_format(Some(self.format)) != self.format {
-                panic!("Incompatible source format.");
-            }
 
-            let result = source.read(samples);
+            let mut buffer = AudioBuffer::new(self.format, samples);
+            let result = source.read(&mut buffer);
 
             if result.state == StreamState::Underrun {
                 warn!("Underrun detected.");

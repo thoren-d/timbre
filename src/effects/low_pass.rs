@@ -1,5 +1,5 @@
 use crate::{
-    core::{AudioFormat, AudioSource, SharedAudioSource},
+    core::{AudioBuffer, AudioSource, SharedAudioSource},
     ReadResult,
 };
 
@@ -7,22 +7,15 @@ use tracing::trace_span;
 
 pub struct LowPass {
     buffer: Vec<f32>,
-    format: AudioFormat,
     rc: f32,
     source: SharedAudioSource,
 }
 
 impl LowPass {
     pub fn new(source: SharedAudioSource, cutoff: f32) -> Self {
-        let format = source.lock().unwrap().request_format(None);
         let buffer = Vec::new();
         let rc = 1.0 / (2.0 * std::f32::consts::PI * cutoff);
-        LowPass {
-            buffer,
-            format,
-            rc,
-            source,
-        }
+        LowPass { buffer, rc, source }
     }
 
     pub fn set_cutoff(&mut self, cutoff: f32) {
@@ -35,35 +28,31 @@ impl LowPass {
 }
 
 impl AudioSource for LowPass {
-    fn request_format(&mut self, _format: Option<AudioFormat>) -> AudioFormat {
-        self.format
-    }
-
-    fn read(&mut self, samples: &mut [f32]) -> ReadResult {
+    fn read(&mut self, buffer: &mut AudioBuffer) -> ReadResult {
         let span = trace_span!("LowPass::read");
         let _span = span.enter();
 
-        let result = self.source.lock().unwrap().read(samples);
+        let result = self.source.lock().unwrap().read(buffer);
         let written = result.read;
         if written == 0 {
             return result;
         }
-        self.buffer.resize(samples.len(), 0.0);
+        self.buffer.resize(buffer.samples.len(), 0.0);
 
-        match self.format.channels {
+        match buffer.format.channels {
             1 => {
-                let dt = 1.0 / self.format.sample_rate as f32;
+                let dt = 1.0 / buffer.format.sample_rate as f32;
                 filter_mono(
-                    &mut samples[..written],
+                    &mut buffer.samples[..written],
                     &mut self.buffer[..written],
                     dt,
                     self.rc,
                 );
             }
             2 => {
-                let dt = 1.0 / self.format.sample_rate as f32;
+                let dt = 1.0 / buffer.format.sample_rate as f32;
                 filter_stereo(
-                    &mut samples[..written],
+                    &mut buffer.samples[..written],
                     &mut self.buffer[..written],
                     dt,
                     self.rc,

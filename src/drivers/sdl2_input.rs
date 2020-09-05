@@ -1,4 +1,7 @@
-use crate::{core::SharedAudioSource, AudioFormat, AudioSource, ReadResult};
+use crate::{
+    core::{AudioBuffer, SharedAudioSource},
+    AudioFormat, AudioSource, ReadResult,
+};
 
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
@@ -72,11 +75,9 @@ impl Sdl2Input {
 }
 
 impl AudioSource for AudioSourceImpl {
-    fn request_format(&mut self, _format: Option<AudioFormat>) -> AudioFormat {
-        self.format
-    }
-
-    fn read(&mut self, samples: &mut [f32]) -> ReadResult {
+    fn read(&mut self, buffer: &mut AudioBuffer) -> ReadResult {
+        assert!(self.format == buffer.format);
+        let samples = &mut buffer.samples;
         let span = trace_span!("Sdl2Input::read");
         let _span = span.enter();
 

@@ -1,4 +1,4 @@
-use crate::{AudioFormat, AudioSource, ReadResult};
+use crate::{core::AudioBuffer, AudioFormat, AudioSource, ReadResult};
 
 use sdl2::audio::{AudioFormatNum, AudioSpecWAV};
 
@@ -20,7 +20,7 @@ impl WavDecoder {
         let data = convert_samples(wav_data.buffer(), wav_data.format);
 
         let format = AudioFormat {
-            channels: wav_data.channels as u32,
+            channels: wav_data.channels,
             sample_rate: wav_data.freq as u32,
         };
 
@@ -33,11 +33,9 @@ impl WavDecoder {
 }
 
 impl AudioSource for WavDecoder {
-    fn request_format(&mut self, _format: Option<AudioFormat>) -> AudioFormat {
-        self.format
-    }
-
-    fn read(&mut self, samples: &mut [f32]) -> ReadResult {
+    fn read(&mut self, buffer: &mut AudioBuffer) -> ReadResult {
+        assert!(self.format == buffer.format);
+        let samples = &mut buffer.samples;
         let remaining = self.data.len() - self.position;
 
         if samples.len() <= remaining {

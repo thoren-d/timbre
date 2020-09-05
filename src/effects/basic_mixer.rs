@@ -1,5 +1,5 @@
 use crate::{
-    core::{AudioFormat, AudioSource, SharedAudioSource},
+    core::{AudioBuffer, AudioFormat, AudioSource, SharedAudioSource},
     ReadResult,
 };
 
@@ -29,7 +29,6 @@ impl BasicMixer {
     }
 
     pub fn add_source(&mut self, source: SharedAudioSource) -> BasicMixerSource {
-        assert!(source.lock().unwrap().request_format(None) == self.format);
         BasicMixerSource {
             key: self.sources.insert(source),
         }
@@ -41,15 +40,12 @@ impl BasicMixer {
 }
 
 impl AudioSource for BasicMixer {
-    fn request_format(&mut self, _format: Option<AudioFormat>) -> AudioFormat {
-        self.format
-    }
-
-    fn read(&mut self, samples: &mut [f32]) -> ReadResult {
+    fn read(&mut self, buffer: &mut AudioBuffer) -> ReadResult {
         let span = trace_span!("BasicMixer::read");
         let _span = span.enter();
 
         if self.sources.is_empty() {
+            let samples = &mut buffer.samples;
             samples.iter_mut().for_each(|sample| *sample = 0.0);
             return ReadResult::good(samples.len());
         }
@@ -59,12 +55,15 @@ impl AudioSource for BasicMixer {
         let ReadResult {
             mut read,
             state: _state,
-        } = first.lock().unwrap().read(samples);
+        } = first.lock().unwrap().read(buffer);
 
         for (_, source) in iter {
+            let samples = &mut buffer.samples;
             self.buffer.resize(samples.len(), 0.0);
 
-            let result = source.lock().unwrap().read(&mut self.buffer[..]);
+            let mut buffer = AudioBuffer::new(self.format, &mut self.buffer[..]);
+
+            let result = source.lock().unwrap().read(&mut buffer);
             read = std::cmp::max(read, result.read);
 
             samples
@@ -74,13 +73,13 @@ impl AudioSource for BasicMixer {
         }
 
         if let Some(coef) = self.coefficient {
-            samples.iter_mut().for_each(|sample| *sample *= coef);
+            buffer.samples.iter_mut().for_each(|sample| *sample *= coef);
         }
 
-        if read < samples.len() {
+        if read < buffer.samples.len() {
             ReadResult::underrun(read)
         } else {
-            ReadResult::good(samples.len())
+            ReadResult::good(buffer.samples.len())
         }
     }
 }
