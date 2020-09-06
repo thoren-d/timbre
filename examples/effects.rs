@@ -15,7 +15,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let audio = sdl.audio()?;
 
     let track1 = WavDecoder::from_file("./assets/music-stereo-f32.wav");
-    let track2 = WavDecoder::from_file("./assets/music-stereo-i16.wav");
+    let track2 = WavDecoder::new(std::fs::File::open("./assets/music-stereo-i16.wav")?);
 
     let low_pass = LowPass::new(track1.into_shared(), 300.0);
     let high_pass = HighPass::new(track2.into_shared(), 4000.0);
