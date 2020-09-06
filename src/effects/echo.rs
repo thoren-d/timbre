@@ -7,21 +7,20 @@ use tracing::trace_span;
 
 pub struct Echo {
     source: SharedAudioSource,
-    delay: usize,
+    delay: f32,
     decay: f32,
     buffer: Vec<f32>,
     position: usize,
 }
 
 impl Echo {
-    pub fn new(source: SharedAudioSource, delay: usize, decay: f32) -> Self {
-        let mut buffer = Vec::new();
-        buffer.resize(delay, 0.0);
+    pub fn new(source: SharedAudioSource, delay: std::time::Duration, decay: f32) -> Self {
+        let delay = delay.as_secs_f32();
         Echo {
             source,
             delay,
             decay,
-            buffer,
+            buffer: Vec::new(),
             position: 0,
         }
     }
@@ -32,6 +31,10 @@ impl AudioSource for Echo {
         let span = trace_span!("Echo::read");
         let _span = span.enter();
 
+        let delay: usize = (buffer.format.sample_rate as f32 * self.delay).ceil() as usize
+            * buffer.format.channels as usize;
+        self.buffer.resize(delay, 0.0);
+
         let status = self.source.lock().unwrap().read(buffer);
         let written = status.read;
 
@@ -40,7 +43,7 @@ impl AudioSource for Echo {
             buffer.samples,
             written,
             &mut self.position,
-            self.delay,
+            delay,
             self.decay,
         );
 

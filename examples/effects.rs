@@ -1,4 +1,4 @@
-use std::error::Error;
+use std::{error::Error, time::Duration};
 use timbre::{
     decoders::WavDecoder,
     drivers::Sdl2Output,
@@ -24,7 +24,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     mixer.add_source(low_pass.into_shared());
     mixer.add_source(high_pass.into_shared());
 
-    let echo = Echo::new(mixer.into_shared(), 30000, 0.7);
+    let echo = Echo::new(mixer.into_shared(), Duration::from_secs_f32(0.5), 0.7);
 
     let mut output = Sdl2Output::new(&audio);
     output.set_source(echo.into_shared());

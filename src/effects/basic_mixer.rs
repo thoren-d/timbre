@@ -7,6 +7,7 @@ use slotmap::{DefaultKey, DenseSlotMap};
 
 use tracing::trace_span;
 
+#[derive(Default)]
 pub struct BasicMixer {
     buffer: Vec<f32>,
     coefficient: Option<f32>,
