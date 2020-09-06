@@ -51,7 +51,6 @@ impl AudioSource for WavDecoder {
 }
 
 fn convert_samples(buffer: &[u8], format: sdl2::audio::AudioFormat) -> Vec<f32> {
-    println!("Wav format: {:?}", format);
     match format {
         sdl2::audio::AudioFormat::F32LSB => {
             assert!(buffer.len() % std::mem::size_of::<f32>() == 0);
