@@ -4,6 +4,7 @@ pub use crate::core::{AudioFormat, AudioSource, IntoShared, ReadResult, StreamSt
 pub mod decoders;
 pub mod drivers;
 pub mod effects;
+pub mod generators;
 
 pub mod prelude;
 
