@@ -59,6 +59,9 @@ impl WavDecoder {
 impl AudioSource for WavDecoder {
     fn read(&mut self, buffer: &mut AudioBuffer) -> ReadResult {
         assert!(self.format == buffer.format);
+        let span = trace_span!("WavDecoder::read");
+        let _span = span.enter();
+
         let samples = &mut buffer.samples;
         let remaining = self.data.len() - self.position;
 

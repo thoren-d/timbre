@@ -66,8 +66,15 @@ impl AudioSource for BasicMixer {
         for (_, source) in iter {
             self.buffer.resize(buffer.samples.len(), 0.0);
 
-            let result = source.lock().unwrap().read(buffer);
-            read = std::cmp::max(read, result.read);
+            {
+                let mut buffer = AudioBuffer {
+                    format: buffer.format,
+                    samples: &mut self.buffer[..],
+                };
+
+                let result = source.lock().unwrap().read(&mut buffer);
+                read = std::cmp::max(read, result.read);
+            }
 
             buffer
                 .samples

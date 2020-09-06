@@ -1,9 +1,10 @@
 mod core;
-pub use crate::core::{AudioFormat, AudioSource, IntoShared, ReadResult, StreamState};
+pub use crate::core::{AudioBuffer, AudioFormat, AudioSource, IntoShared, ReadResult, StreamState};
 
 pub mod decoders;
 pub mod drivers;
 pub mod effects;
+pub mod generators;
 
 pub mod prelude;
 
