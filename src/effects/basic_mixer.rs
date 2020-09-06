@@ -1,5 +1,5 @@
 use crate::{
-    core::{AudioBuffer, AudioFormat, AudioSource, SharedAudioSource},
+    core::{AudioBuffer, AudioSource, SharedAudioSource},
     ReadResult,
 };
 
@@ -7,10 +7,10 @@ use slotmap::{DefaultKey, DenseSlotMap};
 
 use tracing::trace_span;
 
+#[derive(Default)]
 pub struct BasicMixer {
     buffer: Vec<f32>,
     coefficient: Option<f32>,
-    format: AudioFormat,
     sources: DenseSlotMap<DefaultKey, SharedAudioSource>,
 }
 
@@ -19,12 +19,19 @@ pub struct BasicMixerSource {
 }
 
 impl BasicMixer {
-    pub fn new(format: AudioFormat, coefficient: Option<f32>) -> Self {
+    pub fn new() -> Self {
         BasicMixer {
-            coefficient,
-            format,
+            coefficient: None,
             sources: DenseSlotMap::new(),
             buffer: Vec::new(),
+        }
+    }
+
+    pub fn with_coefficient(coefficient: f32) -> Self {
+        BasicMixer {
+            buffer: Vec::new(),
+            coefficient: Some(coefficient),
+            sources: DenseSlotMap::new(),
         }
     }
 
@@ -45,9 +52,8 @@ impl AudioSource for BasicMixer {
         let _span = span.enter();
 
         if self.sources.is_empty() {
-            let samples = &mut buffer.samples;
-            samples.iter_mut().for_each(|sample| *sample = 0.0);
-            return ReadResult::good(samples.len());
+            buffer.samples.iter_mut().for_each(|sample| *sample = 0.0);
+            return ReadResult::good(buffer.samples.len());
         }
 
         let mut iter = self.sources.iter_mut();
@@ -58,15 +64,13 @@ impl AudioSource for BasicMixer {
         } = first.lock().unwrap().read(buffer);
 
         for (_, source) in iter {
-            let samples = &mut buffer.samples;
-            self.buffer.resize(samples.len(), 0.0);
+            self.buffer.resize(buffer.samples.len(), 0.0);
 
-            let mut buffer = AudioBuffer::new(self.format, &mut self.buffer[..]);
-
-            let result = source.lock().unwrap().read(&mut buffer);
+            let result = source.lock().unwrap().read(buffer);
             read = std::cmp::max(read, result.read);
 
-            samples
+            buffer
+                .samples
                 .iter_mut()
                 .zip(self.buffer.iter())
                 .for_each(|(a, b)| *a += *b);

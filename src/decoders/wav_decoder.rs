@@ -1,8 +1,11 @@
 use crate::{core::AudioBuffer, AudioFormat, AudioSource, ReadResult};
 
-use sdl2::audio::{AudioFormatNum, AudioSpecWAV};
+use sdl2::{
+    audio::{AudioFormatNum, AudioSpecWAV},
+    rwops::RWops,
+};
 
-use std::convert::TryInto;
+use std::{convert::TryInto, io::Read};
 use tracing::trace_span;
 
 pub struct WavDecoder {
@@ -12,6 +15,27 @@ pub struct WavDecoder {
 }
 
 impl WavDecoder {
+    pub fn new<R: Read>(mut read: R) -> Self {
+        let span = trace_span!("WavDecoder::new");
+        let _span = span.enter();
+
+        let mut read_buffer = Vec::new();
+        let mut rwops = RWops::from_read(&mut read, &mut read_buffer).unwrap();
+        let wav_data = AudioSpecWAV::load_wav_rw(&mut rwops).unwrap();
+        let data = convert_samples(wav_data.buffer(), wav_data.format);
+
+        let format = AudioFormat {
+            channels: wav_data.channels,
+            sample_rate: wav_data.freq as u32,
+        };
+
+        WavDecoder {
+            data,
+            format,
+            position: 0,
+        }
+    }
+
     pub fn from_file(path: &str) -> Self {
         let span = trace_span!("WavDecoder::from_file");
         let _span = span.enter();
@@ -51,7 +75,6 @@ impl AudioSource for WavDecoder {
 }
 
 fn convert_samples(buffer: &[u8], format: sdl2::audio::AudioFormat) -> Vec<f32> {
-    println!("Wav format: {:?}", format);
     match format {
         sdl2::audio::AudioFormat::F32LSB => {
             assert!(buffer.len() % std::mem::size_of::<f32>() == 0);

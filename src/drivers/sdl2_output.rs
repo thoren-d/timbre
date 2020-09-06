@@ -4,7 +4,7 @@ use crate::{
 };
 
 use sdl2::audio::{AudioCallback, AudioFormatNum, AudioSpecDesired};
-use tracing::{trace_span, warn};
+use tracing::{info, trace_span, warn};
 
 struct Callback {
     pub format: AudioFormat,
@@ -45,15 +45,25 @@ pub struct Sdl2Output {
 
 impl Sdl2Output {
     pub fn new(subsystem: &sdl2::AudioSubsystem) -> Sdl2Output {
+        Sdl2Output::with_format(
+            subsystem,
+            AudioFormat {
+                channels: 2,
+                sample_rate: 44100,
+            },
+        )
+    }
+
+    pub fn with_format(subsystem: &sdl2::AudioSubsystem, format: AudioFormat) -> Sdl2Output {
         let desired_spec = AudioSpecDesired {
-            freq: Some(44100),
-            channels: Some(2),
-            samples: None,
+            freq: Some(format.sample_rate as i32),
+            channels: Some(format.channels),
+            samples: Some(1024),
         };
 
         let device = subsystem
             .open_playback(None, &desired_spec, |spec| {
-                println!("Output Spec: {:?}", spec);
+                info!("Output Spec: {:?}", spec);
 
                 Callback {
                     format: spec.into(),
@@ -67,6 +77,10 @@ impl Sdl2Output {
 
     pub fn set_source(&mut self, source: SharedAudioSource) {
         self.device.lock().source = Some(source);
+    }
+
+    pub fn format(&mut self) -> AudioFormat {
+        self.device.lock().format
     }
 
     pub fn pause(&mut self) {
