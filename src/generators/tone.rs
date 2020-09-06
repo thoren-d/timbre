@@ -1,6 +1,7 @@
 use crate::{AudioSource, ReadResult};
 use tracing::trace_span;
 
+#[derive(Clone)]
 pub struct SinWave {
     amplitude: f32,
     phase: f32,
