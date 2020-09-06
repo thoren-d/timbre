@@ -21,7 +21,7 @@ tracing = "0.1.19"
 
 [dev-dependencies]
 criterion = "0.3.3"
-tracing-chrome = "0.1.0"
+tracing-chrome = "0.2.0"
 tracing-subscriber = "0.2.11"
 
 [features]
