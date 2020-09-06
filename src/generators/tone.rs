@@ -4,9 +4,10 @@ use tracing::trace_span;
 /// An [`AudioSource`](crate::AudioSource) that generates a sine wave.
 ///
 /// # Examples
-/// ```
+/// ```no_run
 /// # use timbre::generators::SineWave;
 /// let sin = SineWave::new(1.0, 440.0);
+/// ```
 #[derive(Clone)]
 pub struct SineWave {
     amplitude: f32,

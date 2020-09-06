@@ -11,7 +11,7 @@ use tracing::trace_span;
 /// This can create the impression of sound played on old speakers or a radio.
 ///
 /// # Examples
-/// ```
+/// ```no_run
 /// # use timbre::{generators::SineWave, effects::HighPass, IntoShared};
 /// # use std::time::Duration;
 /// let sin = SineWave::new(1.0, 440.0);
