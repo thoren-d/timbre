@@ -1,2 +1,3 @@
+//! [`AudioSource`](crate::AudioSource) implementations that generate their own sounds.
 mod tone;
-pub use tone::SinWave;
+pub use tone::SineWave;

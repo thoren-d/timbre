@@ -1,3 +1,5 @@
+//! Effects that transform or combine [`AudioSource`](crate::AudioSource)s.
+
 mod basic_mixer;
 mod echo;
 mod high_pass;

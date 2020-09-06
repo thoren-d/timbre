@@ -5,6 +5,18 @@ use crate::{
 
 use tracing::trace_span;
 
+/// An effect that suppresses high frequencies.
+///
+/// `LowPass` reduces the volume of frequencies above the given cutoff.
+/// This can create the impression of sound coming from far away or in another room.
+///
+/// # Examples
+/// ```
+/// # use timbre::{generators::SineWave, effects::LowPass, IntoShared};
+/// # use std::time::Duration;
+/// let sin = SineWave::new(1.0, 440.0);
+/// let low_pass = LowPass::new(sin.into_shared(), 200.0);
+/// ```
 pub struct LowPass {
     buffer: Vec<f32>,
     rc: f32,
@@ -12,6 +24,12 @@ pub struct LowPass {
 }
 
 impl LowPass {
+    /// Construct a low-pass filter.
+    ///
+    /// # Arguments
+    ///
+    /// * `source` -- The source of audio for this effect.
+    /// * `cutoff` -- The frequency above which volume will be reduced.
     pub fn new(source: SharedAudioSource, cutoff: f32) -> Self {
         let buffer = Vec::new();
         let rc = 1.0 / (2.0 * std::f32::consts::PI * cutoff);

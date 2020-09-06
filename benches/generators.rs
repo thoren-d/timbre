@@ -1,11 +1,11 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use timbre::prelude::*;
-use timbre::{generators::SinWave, AudioBuffer, AudioFormat};
+use timbre::{generators::SineWave, AudioBuffer, AudioFormat};
 
 const WINDOW_SIZE: usize = 1024;
 const SAMPLE_RATE: usize = 44100;
 
-fn bench_sinwave(c: &mut Criterion) {
+fn bench_sinewave(c: &mut Criterion) {
     let mut group = c.benchmark_group("SinWav");
     for channels in [1, 2].iter() {
         group.bench_with_input(
@@ -23,7 +23,7 @@ fn bench_sinwave(c: &mut Criterion) {
                     samples: &mut samples[..],
                 };
 
-                let mut sin_wave = SinWave::new(1.0, 440.0);
+                let mut sin_wave = SineWave::new(1.0, 440.0);
 
                 b.iter(|| {
                     sin_wave.read(&mut buffer);
@@ -34,5 +34,5 @@ fn bench_sinwave(c: &mut Criterion) {
     }
 }
 
-criterion_group!(benches, bench_sinwave);
+criterion_group!(benches, bench_sinewave);
 criterion_main!(benches);

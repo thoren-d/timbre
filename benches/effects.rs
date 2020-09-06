@@ -3,7 +3,7 @@ use timbre::{
     effects::{BasicMixer, Echo, HighPass, LowPass},
     prelude::*,
 };
-use timbre::{generators::SinWave, AudioBuffer, AudioFormat};
+use timbre::{generators::SineWave, AudioBuffer, AudioFormat};
 
 const WINDOW_SIZE: usize = 1024;
 const SAMPLE_RATE: usize = 44100;
@@ -24,7 +24,7 @@ fn bench_echo(c: &mut Criterion) {
                 samples: &mut samples[..],
             };
 
-            let sin_wave = SinWave::new(1.0, 440.0);
+            let sin_wave = SineWave::new(1.0, 440.0);
             let mut echo = Echo::new(
                 sin_wave.into_shared(),
                 std::time::Duration::from_secs_f32(delay),
@@ -57,7 +57,7 @@ fn bench_highpass(c: &mut Criterion) {
                     samples: &mut samples[..],
                 };
 
-                let sin_wave = SinWave::new(1.0, 440.0);
+                let sin_wave = SineWave::new(1.0, 440.0);
                 let mut high_pass = HighPass::new(sin_wave.into_shared(), 1000.0);
                 b.iter(|| {
                     high_pass.read(&mut buffer);
@@ -86,7 +86,7 @@ fn bench_lowpass(c: &mut Criterion) {
                     samples: &mut samples[..],
                 };
 
-                let sin_wave = SinWave::new(1.0, 440.0);
+                let sin_wave = SineWave::new(1.0, 440.0);
                 let mut high_pass = LowPass::new(sin_wave.into_shared(), 1000.0);
                 b.iter(|| {
                     high_pass.read(&mut buffer);
@@ -112,7 +112,7 @@ fn bench_basicmixer(c: &mut Criterion) {
                 samples: &mut samples[..],
             };
 
-            let sin_wave = SinWave::new(1.0, 440.0);
+            let sin_wave = SineWave::new(1.0, 440.0);
             let mut basic_mixer = BasicMixer::new();
 
             for _ in 0..sources {

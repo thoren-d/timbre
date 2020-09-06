@@ -5,6 +5,15 @@ use crate::{
 
 use tracing::trace_span;
 
+/// An effect that simulates an echo.
+///
+/// # Examples
+/// ```
+/// # use timbre::{generators::SineWave, effects::Echo, IntoShared};
+/// # use std::time::Duration;
+/// let sin = SineWave::new(1.0, 440.0);
+/// let echo = Echo::new(sin.into_shared(), Duration::from_secs_f32(0.5), 0.8);
+/// ```
 pub struct Echo {
     source: SharedAudioSource,
     delay: f32,
@@ -14,6 +23,14 @@ pub struct Echo {
 }
 
 impl Echo {
+    /// Construct a new `Echo` effect.
+    ///
+    /// # Arguments
+    ///
+    /// * `source` -- The source of audio for this effect.
+    /// * `delay` -- The length of time before the echo plays back.
+    /// * `decay` -- The amount by which to decay the echo on each repitition. Should
+    ///              be between 0.0 and 1.0, unless you like feedback.
     pub fn new(source: SharedAudioSource, delay: std::time::Duration, decay: f32) -> Self {
         let delay = delay.as_secs_f32();
         Echo {

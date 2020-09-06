@@ -5,6 +5,18 @@ use crate::{
 
 use tracing::trace_span;
 
+/// An effect that suppresses low frequencies.
+///
+/// `HighPass` reduces the volume of frequencies below the given cutoff.
+/// This can create the impression of sound played on old speakers or a radio.
+///
+/// # Examples
+/// ```
+/// # use timbre::{generators::SineWave, effects::HighPass, IntoShared};
+/// # use std::time::Duration;
+/// let sin = SineWave::new(1.0, 440.0);
+/// let high_pass = HighPass::new(sin.into_shared(), 4000.0);
+/// ```
 pub struct HighPass {
     buffer: Vec<f32>,
     rc: f32,
@@ -13,6 +25,12 @@ pub struct HighPass {
 }
 
 impl HighPass {
+    /// Construct a high-pass filter.
+    ///
+    /// # Arguments
+    ///
+    /// * `source` -- The source of audio for this effect.
+    /// * `cutoff` -- The frequency below which volume will be reduced.
     pub fn new(source: SharedAudioSource, cutoff: f32) -> Self {
         let buffer = Vec::new();
         let rc = 1.0 / (2.0 * std::f32::consts::PI * cutoff);

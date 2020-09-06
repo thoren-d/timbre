@@ -8,6 +8,10 @@ use sdl2::{
 use std::{convert::TryInto, io::Read};
 use tracing::trace_span;
 
+/// An AudioSource that reads audio data from a WAV file.
+///
+/// WavDecoder reads from the given WAV file; when finished, AudioSource::read
+/// returns [`Finished`](crate::StreamState::Finished) status.
 pub struct WavDecoder {
     data: Vec<f32>,
     format: AudioFormat,
@@ -15,6 +19,21 @@ pub struct WavDecoder {
 }
 
 impl WavDecoder {
+    /// Construct a WavDecoder that reads from a [`std::io::Read`](std::io::Read).
+    ///
+    /// # Panics
+    ///
+    /// If the WAV file in `read` in corrupted or empty.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// use timbre::decoders::WavDecoder;
+    ///
+    /// let decoder = WavDecoder::new(std::fs::File::open("./example.wav")?);
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn new<R: Read>(mut read: R) -> Self {
         let span = trace_span!("WavDecoder::new");
         let _span = span.enter();
@@ -36,6 +55,18 @@ impl WavDecoder {
         }
     }
 
+    /// Construct a WavDecoder the file given by `path`.
+    ///
+    /// # Panics
+    ///
+    /// If the file cannot be opened or is not a valid WAV file.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// use timbre::decoders::WavDecoder;
+    ///
+    /// let decoder = WavDecoder::from_file("./example.wav");
+    /// ```
     pub fn from_file(path: &str) -> Self {
         let span = trace_span!("WavDecoder::from_file");
         let _span = span.enter();

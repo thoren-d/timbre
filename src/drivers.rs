@@ -1,3 +1,5 @@
+//! Sources and sinks that connect to hardware.
+
 mod sdl2_input;
 mod sdl2_output;
 

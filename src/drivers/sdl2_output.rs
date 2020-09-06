@@ -39,11 +39,51 @@ impl AudioCallback for Callback {
     }
 }
 
+/// A sink that outputs audio data to speakers, etc.
+///
+/// # Examples
+/// ```no_run
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// # use timbre::drivers::{Sdl2Input, Sdl2Output};
+/// let sdl = sdl2::init()?;
+/// let audio = sdl.audio()?;
+///
+/// let mut microphone = Sdl2Input::new(&audio);
+/// let mut speaker = Sdl2Output::new(&audio);
+/// microphone.resume();
+/// speaker.set_source(microphone.source());
+/// speaker.resume();
+/// # Ok(())
+/// # }
+/// ```
 pub struct Sdl2Output {
     device: sdl2::audio::AudioDevice<Callback>,
 }
 
 impl Sdl2Output {
+    /// Construct a new `Sdl2Output` with the default format.
+    ///
+    /// The default format is stereo at 44.1 kHz.
+    ///
+    /// # Arguments
+    ///
+    /// * `subsystem` -- An SDL [`AudioSubystem`](sdl2::AudioSubsystem) used to create an output device.
+    ///
+    /// # Panics
+    ///
+    /// If SDL fails to open the device.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use timbre::drivers::Sdl2Output;
+    /// let sdl = sdl2::init()?;
+    /// let audio = sdl.audio()?;
+    ///
+    /// let speaker = Sdl2Output::new(&audio);
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn new(subsystem: &sdl2::AudioSubsystem) -> Sdl2Output {
         Sdl2Output::with_format(
             subsystem,
@@ -54,6 +94,30 @@ impl Sdl2Output {
         )
     }
 
+    /// Construct a new `Sdl2Output` with the specified format.
+    ///
+    /// This constructor will request the specified format, but the driver may choose something else.
+    ///
+    /// # Arguments
+    ///
+    /// * `subsystem` -- An SDL [`AudioSubystem`](sdl2::AudioSubsystem) used to create an output device.
+    /// * `format` -- The format to request for this output device.
+    ///
+    /// # Panics
+    ///
+    /// If SDL fails to open the device.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use timbre::drivers::Sdl2Output;
+    /// let sdl = sdl2::init()?;
+    /// let audio = sdl.audio()?;
+    ///
+    /// let speaker = Sdl2Output::new(&audio);
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn with_format(subsystem: &sdl2::AudioSubsystem, format: AudioFormat) -> Sdl2Output {
         let desired_spec = AudioSpecDesired {
             freq: Some(format.sample_rate as i32),
@@ -75,18 +139,27 @@ impl Sdl2Output {
         Sdl2Output { device }
     }
 
+    /// Set the source of audio to output.
     pub fn set_source(&mut self, source: SharedAudioSource) {
         self.device.lock().source = Some(source);
     }
 
+    /// Get the driver's chosen audio format.
     pub fn format(&mut self) -> AudioFormat {
         self.device.lock().format
     }
 
+    /// Pause playback for this device.
+    ///
+    /// While paused, this device will not consume data from its source.
     pub fn pause(&mut self) {
         self.device.pause();
     }
 
+    /// Start/resume playback for this device.
+    ///
+    /// The device starts in the paused state, and must be resumed for
+    /// playback from an audio source to begin.
     pub fn resume(&mut self) {
         self.device.resume();
     }
