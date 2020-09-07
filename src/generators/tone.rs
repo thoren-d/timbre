@@ -1,5 +1,5 @@
 use crate::{AudioSource, ReadResult};
-use tracing::trace_span;
+use tracing::instrument;
 
 /// An [`AudioSource`](crate::AudioSource) that generates a sine wave.
 ///
@@ -32,10 +32,8 @@ impl SineWave {
 }
 
 impl AudioSource for SineWave {
+    #[instrument(name = "SineWave::read", skip(self, buffer))]
     fn read(&mut self, buffer: &mut crate::core::AudioBuffer) -> crate::ReadResult {
-        let span = trace_span!("SinWav::read");
-        let _span = span.enter();
-
         let increment =
             std::f32::consts::PI * 2.0 * self.frequency / buffer.format.sample_rate as f32;
 

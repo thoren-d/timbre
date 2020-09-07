@@ -5,7 +5,7 @@ use crate::{
 
 use slotmap::{DefaultKey, DenseSlotMap};
 
-use tracing::trace_span;
+use tracing::instrument;
 
 /// A mixer that combines multiple [`AudioSource`](crate::AudioSource)s.
 ///
@@ -93,10 +93,8 @@ impl BasicMixer {
 }
 
 impl AudioSource for BasicMixer {
+    #[instrument(name = "BasicMixer::read", skip(self, buffer))]
     fn read(&mut self, buffer: &mut AudioBuffer) -> ReadResult {
-        let span = trace_span!("BasicMixer::read");
-        let _span = span.enter();
-
         if self.sources.is_empty() {
             buffer.samples.iter_mut().for_each(|sample| *sample = 0.0);
             return ReadResult::good(buffer.samples.len());

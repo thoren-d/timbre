@@ -3,7 +3,7 @@ use crate::{
     ReadResult,
 };
 
-use tracing::trace_span;
+use tracing::instrument;
 
 /// An effect that simulates an echo.
 ///
@@ -44,10 +44,8 @@ impl Echo {
 }
 
 impl AudioSource for Echo {
+    #[instrument(name = "Echo::read", skip(self, buffer))]
     fn read(&mut self, buffer: &mut AudioBuffer) -> ReadResult {
-        let span = trace_span!("Echo::read");
-        let _span = span.enter();
-
         let delay: usize = (buffer.format.sample_rate as f32 * self.delay).ceil() as usize
             * buffer.format.channels as usize;
         self.buffer.resize(delay, 0.0);

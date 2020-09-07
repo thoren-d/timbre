@@ -7,7 +7,7 @@ use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 
 use sdl2::audio::{AudioCallback, AudioSpecDesired};
-use tracing::{info, trace_span};
+use tracing::{info, instrument};
 
 /// A source for audio captured by a microphone, etc.
 ///
@@ -43,10 +43,8 @@ struct AudioSourceImpl {
 
 impl AudioCallback for Callback {
     type Channel = f32;
+    #[instrument(name = "Sdl2Input::callback", skip(self, samples))]
     fn callback(&mut self, samples: &mut [Self::Channel]) {
-        let span = trace_span!("Sdl2Input::callback");
-        let _span = span.enter();
-
         self.buffer.lock().unwrap().extend(samples.iter().cloned());
     }
 }
@@ -171,11 +169,10 @@ impl Sdl2Input {
 }
 
 impl AudioSource for AudioSourceImpl {
+    #[instrument(name = "Sdl2Input::read", skip(self, buffer))]
     fn read(&mut self, buffer: &mut AudioBuffer) -> ReadResult {
         assert!(self.format == buffer.format);
         let samples = &mut buffer.samples;
-        let span = trace_span!("Sdl2Input::read");
-        let _span = span.enter();
 
         let mut buffer = self.buffer.lock().unwrap();
 

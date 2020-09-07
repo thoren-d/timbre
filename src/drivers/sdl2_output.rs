@@ -4,7 +4,7 @@ use crate::{
 };
 
 use sdl2::audio::{AudioCallback, AudioFormatNum, AudioSpecDesired};
-use tracing::{info, trace_span, warn};
+use tracing::{info, instrument, warn};
 
 struct Callback {
     pub format: AudioFormat,
@@ -13,10 +13,8 @@ struct Callback {
 
 impl AudioCallback for Callback {
     type Channel = f32;
+    #[instrument(name = "Sdl2Output::callback", skip(self, samples))]
     fn callback(&mut self, samples: &mut [Self::Channel]) {
-        let span = trace_span!("Sdl2Output::callback");
-        let _span = span.enter();
-
         if let Some(source) = &self.source {
             let mut source = source.lock().unwrap();
 

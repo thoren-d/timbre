@@ -6,7 +6,7 @@ use sdl2::{
 };
 
 use std::{convert::TryInto, io::Read};
-use tracing::trace_span;
+use tracing::instrument;
 
 /// An AudioSource that reads audio data from a WAV file.
 ///
@@ -34,10 +34,8 @@ impl WavDecoder {
     /// # Ok(())
     /// # }
     /// ```
+    #[instrument(name = "WavDecoder::new", skip(read))]
     pub fn new<R: Read>(mut read: R) -> Self {
-        let span = trace_span!("WavDecoder::new");
-        let _span = span.enter();
-
         let mut read_buffer = Vec::new();
         let mut rwops = RWops::from_read(&mut read, &mut read_buffer).unwrap();
         let wav_data = AudioSpecWAV::load_wav_rw(&mut rwops).unwrap();
@@ -67,10 +65,8 @@ impl WavDecoder {
     ///
     /// let decoder = WavDecoder::from_file("./example.wav");
     /// ```
+    #[instrument(name = "WavDecoder::from_file")]
     pub fn from_file(path: &str) -> Self {
-        let span = trace_span!("WavDecoder::from_file");
-        let _span = span.enter();
-
         let wav_data = AudioSpecWAV::load_wav(path).unwrap();
         let data = convert_samples(wav_data.buffer(), wav_data.format);
 
@@ -88,10 +84,9 @@ impl WavDecoder {
 }
 
 impl AudioSource for WavDecoder {
+    #[instrument(name = "WavDecoder::read", skip(self, buffer))]
     fn read(&mut self, buffer: &mut AudioBuffer) -> ReadResult {
         assert!(self.format == buffer.format);
-        let span = trace_span!("WavDecoder::read");
-        let _span = span.enter();
 
         let samples = &mut buffer.samples;
         let remaining = self.data.len() - self.position;
@@ -108,6 +103,7 @@ impl AudioSource for WavDecoder {
     }
 }
 
+#[instrument(skip(buffer))]
 fn convert_samples(buffer: &[u8], format: sdl2::audio::AudioFormat) -> Vec<f32> {
     match format {
         sdl2::audio::AudioFormat::F32LSB => {

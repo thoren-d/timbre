@@ -3,7 +3,7 @@ use crate::{
     ReadResult,
 };
 
-use tracing::trace_span;
+use tracing::instrument;
 
 /// An effect that suppresses low frequencies.
 ///
@@ -44,10 +44,8 @@ impl HighPass {
 }
 
 impl AudioSource for HighPass {
+    #[instrument(name = "HighPass::read", skip(self, buffer))]
     fn read(&mut self, buffer: &mut AudioBuffer) -> ReadResult {
-        let span = trace_span!("HighPass::read");
-        let _span = span.enter();
-
         let result = self.source.lock().unwrap().read(buffer);
         let written = result.read;
         if written == 0 {
