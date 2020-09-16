@@ -10,7 +10,7 @@ edition = "2018"
 keywords = ["audio", "gamedev"]
 license = "MIT"
 readme = "README.md"
-repository = "https://github.com/Antigroup/timbre"
+repository = "https://github.com/thoren-d/timbre"
 
 exclude = ["/assets"]
 
