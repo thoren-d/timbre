@@ -19,6 +19,9 @@ sdl2 = "0.34.0"
 slotmap = "0.4.0"
 tracing = "0.1.19"
 
+[dependencies.sdl2-sys]
+version = "=0.34.2"
+
 [dev-dependencies]
 criterion = "0.3.3"
 tracing-chrome = "0.2.0"
