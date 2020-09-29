@@ -15,16 +15,10 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - name: Install packages
-      run: sudo apt install libsdl2-dev
-      if: ${{ matrix.os == 'ubuntu-latest' }}
-
     - name: Checkout
       uses: actions/checkout@v2
-
-    - run: |
-        git lfs fetch
-        git lfs checkout
+      with:
+        lfs: true
 
     - name: Install Rust toolchain
       run: |
@@ -43,9 +37,18 @@ jobs:
         key: cargo-${{ matrix.rust }}-${{ runner.os }}-${{ hashFiles('**/Cargo.lock', '.github/workflows/*') }}
 
     - name: Clippy
-      run: cargo clippy --all-targets --all-features -- -D clippy::all
+      run: cargo clippy --verbose --all-targets --all-features -- -D clippy::all
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --verbose --all-targets
+
+    - name: Find
+      run: find .
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: artifacts
+        path: target/
+
     - name: Run tests
       run: cargo test --verbose
 
