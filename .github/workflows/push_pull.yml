@@ -43,6 +43,7 @@ jobs:
 
     - name: Find
       run: find .
+      if: ${{ matrix.os == 'ubuntu-latest' }}
 
     - uses: actions/upload-artifact@v2
       with:
