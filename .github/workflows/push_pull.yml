@@ -22,6 +22,10 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
+    - run: |
+        git lfs fetch
+        git lfs checkout
+
     - name: Install Rust toolchain
       run: |
         rustup update ${{ matrix.rust }}
