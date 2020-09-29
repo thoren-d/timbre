@@ -8,7 +8,7 @@ use tracing::instrument;
 /// An effect that simulates an echo.
 ///
 /// # Examples
-/// ```no_run
+/// ```
 /// # use timbre::{generators::SineWave, effects::Echo, IntoShared};
 /// # use std::time::Duration;
 /// let sin = SineWave::new(1.0, 440.0);

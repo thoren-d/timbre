@@ -13,7 +13,7 @@ use tracing::instrument;
 /// and optionally multiplies by a coefficient to give some headroom.
 ///
 /// # Examples
-/// ```no_run
+/// ```
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// # use timbre::{generators::SineWave, effects::BasicMixer, IntoShared};
 /// let sin1 = SineWave::new(0.5, 440.0);
@@ -80,7 +80,7 @@ impl BasicMixer {
     /// Removes the source indicated by `source`, if present.
     ///
     /// # Examples
-    /// ```no_run
+    /// ```
     /// # use timbre::{effects::BasicMixer, generators::SineWave, IntoShared};
     /// let sin = SineWave::new(1.0, 440.0);
     /// let mut mixer = BasicMixer::new();
