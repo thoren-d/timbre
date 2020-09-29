@@ -8,9 +8,10 @@ env:
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        rust: [stable, beta, nightly]
+        rust: ['1.44', beta, nightly]
 
     runs-on: ${{ matrix.os }}
 
@@ -44,11 +45,6 @@ jobs:
     - name: Find
       run: find .
       if: ${{ matrix.os == 'ubuntu-latest' }}
-
-    - uses: actions/upload-artifact@v2
-      with:
-        name: artifacts
-        path: target/
 
     - name: Run tests
       run: cargo test --verbose
