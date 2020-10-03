@@ -26,11 +26,11 @@ impl WavDecoder {
     /// If the WAV file in `read` in corrupted or empty.
     ///
     /// # Examples
-    /// ```no_run
+    /// ```
     /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// use timbre::decoders::WavDecoder;
     ///
-    /// let decoder = WavDecoder::new(std::fs::File::open("./example.wav")?);
+    /// let decoder = WavDecoder::new(std::fs::File::open("./assets/music-mono-f32.wav")?);
     /// # Ok(())
     /// # }
     /// ```
@@ -60,10 +60,10 @@ impl WavDecoder {
     /// If the file cannot be opened or is not a valid WAV file.
     ///
     /// # Examples
-    /// ```no_run
+    /// ```
     /// use timbre::decoders::WavDecoder;
     ///
-    /// let decoder = WavDecoder::from_file("./example.wav");
+    /// let decoder = WavDecoder::from_file("./assets/music-stereo-i16.wav");
     /// ```
     #[instrument(name = "WavDecoder::from_file")]
     pub fn from_file(path: &str) -> Self {

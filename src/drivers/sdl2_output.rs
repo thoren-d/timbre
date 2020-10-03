@@ -40,9 +40,10 @@ impl AudioCallback for Callback {
 /// A sink that outputs audio data to speakers, etc.
 ///
 /// # Examples
-/// ```no_run
+/// ```
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// # use timbre::drivers::{Sdl2Input, Sdl2Output};
+/// # std::env::set_var("SDL_AUDIODRIVER", "dummy");
 /// let sdl = sdl2::init()?;
 /// let audio = sdl.audio()?;
 ///
@@ -72,9 +73,10 @@ impl Sdl2Output {
     /// If SDL fails to open the device.
     ///
     /// # Examples
-    /// ```no_run
+    /// ```
     /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # use timbre::drivers::Sdl2Output;
+    /// # std::env::set_var("SDL_AUDIODRIVER", "dummy");
     /// let sdl = sdl2::init()?;
     /// let audio = sdl.audio()?;
     ///
@@ -106,9 +108,10 @@ impl Sdl2Output {
     /// If SDL fails to open the device.
     ///
     /// # Examples
-    /// ```no_run
+    /// ```
     /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # use timbre::drivers::Sdl2Output;
+    /// # std::env::set_var("SDL_AUDIODRIVER", "dummy");
     /// let sdl = sdl2::init()?;
     /// let audio = sdl.audio()?;
     ///

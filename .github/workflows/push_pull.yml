@@ -8,15 +8,18 @@ env:
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        rust: [stable, beta, nightly]
+        rust: ['1.44.0', stable, nightly]
 
     runs-on: ${{ matrix.os }}
 
     steps:
     - name: Checkout
       uses: actions/checkout@v2
+      with:
+        lfs: true
 
     - name: Install Rust toolchain
       run: |
@@ -35,11 +38,18 @@ jobs:
         key: cargo-${{ matrix.rust }}-${{ runner.os }}-${{ hashFiles('**/Cargo.lock', '.github/workflows/*') }}
 
     - name: Clippy
-      run: cargo clippy --all-targets --all-features -- -D clippy::all
+      run: cargo clippy --verbose --all-targets --all-features -- -D clippy::all
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --verbose --all-targets
+
+    - name: Find
+      run: find .
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+
     - name: Run tests
-      run: cargo test --verbose
+      run: cargo test --all-targets --verbose
+    - run: cargo test --doc --verbose
+      if: ${{ matrix.rust == '1.44.0' }}
 
   format:
     runs-on: ubuntu-latest

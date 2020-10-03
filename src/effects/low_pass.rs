@@ -11,7 +11,7 @@ use tracing::instrument;
 /// This can create the impression of sound coming from far away or in another room.
 ///
 /// # Examples
-/// ```no_run
+/// ```
 /// # use timbre::{generators::SineWave, effects::LowPass, IntoShared};
 /// # use std::time::Duration;
 /// let sin = SineWave::new(1.0, 440.0);
