@@ -11,7 +11,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        rust: ['1.44.0', stable, nightly]
+        rust: [stable, beta, nightly]
 
     runs-on: ${{ matrix.os }}
 
@@ -48,8 +48,8 @@ jobs:
 
     - name: Run tests
       run: cargo test --all-targets --verbose
-    - run: cargo test --doc --verbose
-      if: ${{ matrix.rust == '1.44.0' }}
+    - name: Run doc tests
+      run: cargo test --doc --verbose
 
   format:
     runs-on: ubuntu-latest
