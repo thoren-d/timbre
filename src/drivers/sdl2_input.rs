@@ -1,6 +1,6 @@
 use crate::{
     core::{AudioBuffer, SharedAudioSource},
-    AudioFormat, AudioSource, ReadResult,
+    AudioFormat, AudioSource, Error, ReadResult,
 };
 
 use std::collections::VecDeque;
@@ -19,8 +19,8 @@ use tracing::{info, instrument};
 /// let sdl = sdl2::init()?;
 /// let audio = sdl.audio()?;
 ///
-/// let mut microphone = Sdl2Input::new(&audio);
-/// let mut speaker = Sdl2Output::new(&audio);
+/// let mut microphone = Sdl2Input::new(&audio)?;
+/// let mut speaker = Sdl2Output::new(&audio)?;
 /// microphone.resume();
 /// speaker.set_source(microphone.source());
 /// speaker.resume();
@@ -59,7 +59,7 @@ impl Sdl2Input {
     ///
     /// * `subsystem` -- An SDL [`AudioSubystem`](sdl2::AudioSubsystem) used to create a capture device.
     ///
-    /// # Panics
+    /// # Errors
     ///
     /// If SDL fails to open the device.
     ///
@@ -71,11 +71,11 @@ impl Sdl2Input {
     /// let sdl = sdl2::init()?;
     /// let audio = sdl.audio()?;
     ///
-    /// let microphone = Sdl2Input::new(&audio);
+    /// let microphone = Sdl2Input::new(&audio)?;
     /// # Ok(())
     /// # }
     /// ```
-    pub fn new(subsystem: &sdl2::AudioSubsystem) -> Self {
+    pub fn new(subsystem: &sdl2::AudioSubsystem) -> Result<Self, Error> {
         Sdl2Input::with_format(
             subsystem,
             AudioFormat {
@@ -94,7 +94,7 @@ impl Sdl2Input {
     /// * `subsystem` -- An SDL [`AudioSubystem`](sdl2::AudioSubsystem) used to create a capture device.
     /// * `format` -- The format to request for this input device.
     ///
-    /// # Panics
+    /// # Errors
     ///
     /// If SDL fails to open the device.
     ///
@@ -107,11 +107,14 @@ impl Sdl2Input {
     /// let audio = sdl.audio()?;
     ///
     /// let format = AudioFormat { channels: 2, sample_rate: 44100 };
-    /// let microphone = Sdl2Input::with_format(&audio, format);
+    /// let microphone = Sdl2Input::with_format(&audio, format)?;
     /// # Ok(())
     /// # }
     /// ```
-    pub fn with_format(subsystem: &sdl2::AudioSubsystem, format: AudioFormat) -> Self {
+    pub fn with_format(
+        subsystem: &sdl2::AudioSubsystem,
+        format: AudioFormat,
+    ) -> Result<Self, Error> {
         let desired_spec = AudioSpecDesired {
             freq: Some(format.sample_rate as i32),
             channels: Some(format.channels),
@@ -129,9 +132,9 @@ impl Sdl2Input {
                     format: spec.into(),
                 }
             })
-            .unwrap();
+            .map_err(Error::from_sdl)?;
 
-        Sdl2Input { device, buffer }
+        Ok(Sdl2Input { device, buffer })
     }
 
     /// Return the device's chosen format.

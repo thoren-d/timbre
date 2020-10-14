@@ -12,8 +12,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let sdl = sdl2::init()?;
     let audio = sdl.audio()?;
 
-    let mut mic = Sdl2Input::new(&audio);
-    let mut output = Sdl2Output::new(&audio);
+    let mut mic = Sdl2Input::new(&audio)?;
+    let mut output = Sdl2Output::new(&audio)?;
 
     mic.resume();
     output.set_source(mic.source());

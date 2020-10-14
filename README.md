@@ -19,14 +19,15 @@ programming, but should be flexible enough for other applications as well.
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     use std::time::Duration;
     use timbre::prelude::*;
+
     // SDL setup.
     let sdl = sdl2::init()?;
     let audio = sdl.audio()?;
 
     // Inputs
-    let mut microphone = timbre::drivers::Sdl2Input::new(&audio);
+    let mut microphone = timbre::drivers::Sdl2Input::new(&audio)?;
     microphone.resume();
-    let music = timbre::decoders::WavDecoder::from_file("./music.wav");
+    let music = timbre::decoders::WavDecoder::from_file("./assets/music-stereo-f32.wav")?;
 
     // Apply effects
     let microphone = timbre::effects::Echo::new(microphone.source(),
@@ -39,12 +40,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     mixer.add_source(music.into_shared());
 
     // Output
-    let mut speaker = timbre::drivers::Sdl2Output::new(&audio);
+    let mut speaker = timbre::drivers::Sdl2Output::new(&audio)?;
     speaker.set_source(mixer.into_shared());
     speaker.resume();
 
     std::thread::sleep(Duration::from_secs_f32(10.0));
-
     Ok(())
 }
 ```
