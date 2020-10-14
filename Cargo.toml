@@ -28,7 +28,7 @@ tracing-chrome = "0.2.0"
 tracing-subscriber = "0.2.11"
 
 [features]
-default = ["sdl2/bundled"]
+default = ["sdl2/bundled", "sdl2/static-link"]
 
 [package.metadata.docs.rs]
 features = []
