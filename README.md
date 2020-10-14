@@ -49,15 +49,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-# What's New
+# What's new in 0.3?
 
-* New core interfaces are more opinionated and a little easier to work with.
-* Various improvements to usability.
-* Added documentation; expanded README.
+* Functions that can fail now return Result.
+* New Error type.
 
 # Roadmap
 
-## 0.3
+## 0.4
 
-* Generic effects to reduce number of `Arc<Mutex<...>>`.
-* Don't panic; return Result.
+* Make effects generic to reduce number of `Arc<Mutex<...>>`.
+* Make effects more mutable; give access to their source.
+
+## 0.5
+
+* Introduce 3D spatialization effect.
+* Add Pan effect for stereo sources.
