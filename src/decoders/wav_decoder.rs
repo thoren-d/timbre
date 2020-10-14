@@ -1,4 +1,4 @@
-use crate::{core::AudioBuffer, AudioFormat, AudioSource, ReadResult};
+use crate::{core::AudioBuffer, AudioFormat, AudioSource, Error, ReadResult};
 
 use sdl2::{
     audio::{AudioFormatNum, AudioSpecWAV},
@@ -21,24 +21,24 @@ pub struct WavDecoder {
 impl WavDecoder {
     /// Construct a WavDecoder that reads from a [`std::io::Read`](std::io::Read).
     ///
-    /// # Panics
+    /// # Errors
     ///
-    /// If the WAV file in `read` in corrupted or empty.
+    /// If the WAV file in `read` in corrupted or empty, will return the underlying SDL error.
     ///
     /// # Examples
     /// ```
     /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// use timbre::decoders::WavDecoder;
     ///
-    /// let decoder = WavDecoder::new(std::fs::File::open("./assets/music-mono-f32.wav")?);
+    /// let decoder = WavDecoder::new(std::fs::File::open("./assets/music-mono-f32.wav")?)?;
     /// # Ok(())
     /// # }
     /// ```
     #[instrument(name = "WavDecoder::new", skip(read))]
-    pub fn new<R: Read>(mut read: R) -> Self {
+    pub fn new<R: Read>(mut read: R) -> Result<Self, Error> {
         let mut read_buffer = Vec::new();
-        let mut rwops = RWops::from_read(&mut read, &mut read_buffer).unwrap();
-        let wav_data = AudioSpecWAV::load_wav_rw(&mut rwops).unwrap();
+        let mut rwops = RWops::from_read(&mut read, &mut read_buffer).map_err(Error::from_sdl)?;
+        let wav_data = AudioSpecWAV::load_wav_rw(&mut rwops).map_err(Error::from_sdl)?;
         let data = convert_samples(wav_data.buffer(), wav_data.format);
 
         let format = AudioFormat {
@@ -46,28 +46,31 @@ impl WavDecoder {
             sample_rate: wav_data.freq as u32,
         };
 
-        WavDecoder {
+        Ok(WavDecoder {
             data,
             format,
             position: 0,
-        }
+        })
     }
 
     /// Construct a WavDecoder the file given by `path`.
     ///
-    /// # Panics
+    /// # Errors
     ///
-    /// If the file cannot be opened or is not a valid WAV file.
+    /// If the file cannot be opened or is not a valid WAV file, will return the underlying SDL error.
     ///
     /// # Examples
     /// ```
+    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// use timbre::decoders::WavDecoder;
     ///
-    /// let decoder = WavDecoder::from_file("./assets/music-stereo-i16.wav");
+    /// let decoder = WavDecoder::from_file("./assets/music-stereo-i16.wav")?;
+    /// # Ok(())
+    /// }
     /// ```
     #[instrument(name = "WavDecoder::from_file")]
-    pub fn from_file(path: &str) -> Self {
-        let wav_data = AudioSpecWAV::load_wav(path).unwrap();
+    pub fn from_file(path: &str) -> Result<Self, Error> {
+        let wav_data = AudioSpecWAV::load_wav(path).map_err(Error::from_sdl)?;
         let data = convert_samples(wav_data.buffer(), wav_data.format);
 
         let format = AudioFormat {
@@ -75,11 +78,11 @@ impl WavDecoder {
             sample_rate: wav_data.freq as u32,
         };
 
-        WavDecoder {
+        Ok(WavDecoder {
             data,
             format,
             position: 0,
-        }
+        })
     }
 }
 

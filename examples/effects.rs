@@ -14,8 +14,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let sdl = sdl2::init()?;
     let audio = sdl.audio()?;
 
-    let track1 = WavDecoder::from_file("./assets/music-stereo-f32.wav");
-    let track2 = WavDecoder::new(std::fs::File::open("./assets/music-stereo-i16.wav")?);
+    let track1 = WavDecoder::from_file("./assets/music-stereo-f32.wav")?;
+    let track2 = WavDecoder::new(std::fs::File::open("./assets/music-stereo-i16.wav")?)?;
 
     let low_pass = LowPass::new(track1.into_shared(), 300.0);
     let high_pass = HighPass::new(track2.into_shared(), 4000.0);
@@ -26,7 +26,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let echo = Echo::new(mixer.into_shared(), Duration::from_secs_f32(0.5), 0.7);
 
-    let mut output = Sdl2Output::new(&audio);
+    let mut output = Sdl2Output::new(&audio)?;
     output.set_source(echo.into_shared());
     output.resume();
 

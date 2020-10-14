@@ -12,14 +12,15 @@
 //! # std::env::set_var("SDL_AUDIODRIVER", "dummy");
 //! use std::time::Duration;
 //! use timbre::prelude::*;
+//!
 //! // SDL setup.
 //! let sdl = sdl2::init()?;
 //! let audio = sdl.audio()?;
 //!
 //! // Inputs
-//! let mut microphone = timbre::drivers::Sdl2Input::new(&audio);
+//! let mut microphone = timbre::drivers::Sdl2Input::new(&audio)?;
 //! microphone.resume();
-//! let music = timbre::decoders::WavDecoder::from_file("./assets/music-stereo-f32.wav");
+//! let music = timbre::decoders::WavDecoder::from_file("./assets/music-stereo-f32.wav")?;
 //!
 //! // Apply effects
 //! let microphone = timbre::effects::Echo::new(microphone.source(),
@@ -32,7 +33,7 @@
 //! mixer.add_source(music.into_shared());
 //!
 //! // Output
-//! let mut speaker = timbre::drivers::Sdl2Output::new(&audio);
+//! let mut speaker = timbre::drivers::Sdl2Output::new(&audio)?;
 //! speaker.set_source(mixer.into_shared());
 //! speaker.resume();
 //!
@@ -41,6 +42,8 @@
 
 mod core;
 pub use crate::core::*;
+mod error;
+pub use crate::error::*;
 
 pub mod decoders;
 pub mod drivers;
