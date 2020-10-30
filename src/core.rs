@@ -97,3 +97,9 @@ impl<T: AudioSource + Send + 'static> IntoShared for T {
         Arc::new(Mutex::new(self))
     }
 }
+
+impl AudioSource for SharedAudioSource {
+    fn read(&mut self, buffer: &mut AudioBuffer) -> ReadResult {
+        self.lock().unwrap().read(buffer)
+    }
+}

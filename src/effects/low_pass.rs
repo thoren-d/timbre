@@ -1,5 +1,5 @@
 use crate::{
-    core::{AudioBuffer, AudioSource, SharedAudioSource},
+    core::{AudioBuffer, AudioSource},
     ReadResult,
 };
 
@@ -15,22 +15,22 @@ use tracing::instrument;
 /// # use timbre::{generators::SineWave, effects::LowPass, IntoShared};
 /// # use std::time::Duration;
 /// let sin = SineWave::new(1.0, 440.0);
-/// let low_pass = LowPass::new(sin.into_shared(), 200.0);
+/// let low_pass = LowPass::new(sin, 200.0);
 /// ```
-pub struct LowPass {
+pub struct LowPass<S: AudioSource> {
     buffer: Vec<f32>,
     rc: f32,
-    source: SharedAudioSource,
+    source: S,
 }
 
-impl LowPass {
+impl<S: AudioSource> LowPass<S> {
     /// Construct a low-pass filter.
     ///
     /// # Arguments
     ///
     /// * `source` -- The source of audio for this effect.
     /// * `cutoff` -- The frequency above which volume will be reduced.
-    pub fn new(source: SharedAudioSource, cutoff: f32) -> Self {
+    pub fn new(source: S, cutoff: f32) -> Self {
         let buffer = Vec::new();
         let rc = 1.0 / (2.0 * std::f32::consts::PI * cutoff);
         LowPass { buffer, rc, source }
@@ -45,10 +45,10 @@ impl LowPass {
     }
 }
 
-impl AudioSource for LowPass {
+impl<S: AudioSource> AudioSource for LowPass<S> {
     #[instrument(name = "LowPass::read", skip(self, buffer))]
     fn read(&mut self, buffer: &mut AudioBuffer) -> ReadResult {
-        let result = self.source.lock().unwrap().read(buffer);
+        let result = self.source.read(buffer);
         let written = result.read;
         if written == 0 {
             return result;

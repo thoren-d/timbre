@@ -32,7 +32,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Apply effects
     let microphone = timbre::effects::Echo::new(microphone.source(),
             Duration::from_secs_f32(0.5), 0.6);
-    let music = timbre::effects::LowPass::new(music.into_shared(), 200.0);
+    let music = timbre::effects::LowPass::new(music, 200.0);
 
     // Mix them together
     let mut mixer = timbre::effects::BasicMixer::new();

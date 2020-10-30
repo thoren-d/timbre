@@ -1,5 +1,5 @@
 use crate::{
-    core::{AudioBuffer, AudioSource, SharedAudioSource},
+    core::{AudioBuffer, AudioSource},
     ReadResult,
 };
 
@@ -12,17 +12,17 @@ use tracing::instrument;
 /// # use timbre::{generators::SineWave, effects::Echo, IntoShared};
 /// # use std::time::Duration;
 /// let sin = SineWave::new(1.0, 440.0);
-/// let echo = Echo::new(sin.into_shared(), Duration::from_secs_f32(0.5), 0.8);
+/// let echo = Echo::new(sin, Duration::from_secs_f32(0.5), 0.8);
 /// ```
-pub struct Echo {
-    source: SharedAudioSource,
+pub struct Echo<S: AudioSource> {
+    source: S,
     delay: f32,
     decay: f32,
     buffer: Vec<f32>,
     position: usize,
 }
 
-impl Echo {
+impl<S: AudioSource> Echo<S> {
     /// Construct a new `Echo` effect.
     ///
     /// # Arguments
@@ -31,7 +31,7 @@ impl Echo {
     /// * `delay` -- The length of time before the echo plays back.
     /// * `decay` -- The amount by which to decay the echo on each repitition. Should
     ///              be between 0.0 and 1.0, unless you like feedback.
-    pub fn new(source: SharedAudioSource, delay: std::time::Duration, decay: f32) -> Self {
+    pub fn new(source: S, delay: std::time::Duration, decay: f32) -> Self {
         let delay = delay.as_secs_f32();
         Echo {
             source,
@@ -43,14 +43,14 @@ impl Echo {
     }
 }
 
-impl AudioSource for Echo {
+impl<S: AudioSource> AudioSource for Echo<S> {
     #[instrument(name = "Echo::read", skip(self, buffer))]
     fn read(&mut self, buffer: &mut AudioBuffer) -> ReadResult {
         let delay: usize = (buffer.format.sample_rate as f32 * self.delay).ceil() as usize
             * buffer.format.channels as usize;
         self.buffer.resize(delay, 0.0);
 
-        let status = self.source.lock().unwrap().read(buffer);
+        let status = self.source.read(buffer);
         let written = status.read;
 
         echo(

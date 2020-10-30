@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use timbre::{
     effects::{BasicMixer, Echo, HighPass, LowPass},
@@ -42,11 +44,7 @@ fn bench_echo(c: &mut Criterion) {
             let source = DummySource {
                 number: black_box(0.5),
             };
-            let mut echo = Echo::new(
-                source.into_shared(),
-                std::time::Duration::from_secs_f32(delay),
-                0.5,
-            );
+            let mut echo = Echo::new(source, Duration::from_secs_f32(delay), 0.5);
 
             b.iter(|| {
                 echo.read(&mut buffer);
@@ -77,7 +75,7 @@ fn bench_highpass(c: &mut Criterion) {
                 let source = DummySource {
                     number: black_box(0.5),
                 };
-                let mut high_pass = HighPass::new(source.into_shared(), 1000.0);
+                let mut high_pass = HighPass::new(source, 1000.0);
                 b.iter(|| {
                     high_pass.read(&mut buffer);
                 });
@@ -108,9 +106,44 @@ fn bench_lowpass(c: &mut Criterion) {
                 let source = DummySource {
                     number: black_box(0.5),
                 };
-                let mut low_pass = LowPass::new(source.into_shared(), 1000.0);
+                let mut low_pass = LowPass::new(source, 1000.0);
                 b.iter(|| {
                     low_pass.read(&mut buffer);
+                });
+                black_box(samples);
+            },
+        );
+    }
+}
+
+fn bench_composite(c: &mut Criterion) {
+    let mut group = c.benchmark_group("CompositeEffect");
+    for channels in [1, 2].iter() {
+        group.bench_with_input(
+            BenchmarkId::new("read", channels),
+            channels,
+            |b, &channels| {
+                let mut samples = Vec::new();
+                samples.resize(WINDOW_SIZE * channels, 0.0);
+
+                let mut buffer = AudioBuffer {
+                    format: AudioFormat {
+                        channels: channels as u8,
+                        sample_rate: SAMPLE_RATE as u32,
+                    },
+                    samples: &mut samples[..],
+                };
+
+                let source = DummySource {
+                    number: black_box(0.5),
+                };
+                let source = LowPass::new(source, 1000.0);
+                let source = HighPass::new(source, 100.0);
+                let source = Echo::new(source, Duration::from_secs_f32(0.2), 0.5);
+                let source = Echo::new(source, Duration::from_secs_f32(0.1), 0.5);
+                let mut source = Echo::new(source, Duration::from_secs_f32(0.05), 0.5);
+                b.iter(|| {
+                    source.read(&mut buffer);
                 });
                 black_box(samples);
             },
@@ -155,6 +188,7 @@ criterion_group!(
     bench_echo,
     bench_highpass,
     bench_lowpass,
-    bench_basicmixer
+    bench_basicmixer,
+    bench_composite
 );
 criterion_main!(benches);
