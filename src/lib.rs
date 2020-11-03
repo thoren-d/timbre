@@ -25,7 +25,7 @@
 //! // Apply effects
 //! let microphone = timbre::effects::Echo::new(microphone.source(),
 //!         Duration::from_secs_f32(0.5), 0.6);
-//! let music = timbre::effects::LowPass::new(music.into_shared(), 200.0);
+//! let music = timbre::effects::LowPass::new(music, 200.0);
 //!
 //! // Mix them together
 //! let mut mixer = timbre::effects::BasicMixer::new();
@@ -53,11 +53,3 @@ pub mod generators;
 pub mod prelude;
 
 mod sdl_util;
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
