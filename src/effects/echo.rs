@@ -1,7 +1,4 @@
-use crate::{
-    core::{AudioBuffer, AudioSource},
-    ReadResult,
-};
+use crate::{core::AudioSource, ReadResult, Sample};
 
 use tracing::instrument;
 
@@ -9,9 +6,9 @@ use tracing::instrument;
 ///
 /// # Examples
 /// ```
-/// # use timbre::{generators::SineWave, effects::Echo, IntoShared};
+/// # use timbre::{AudioFormat, generators::SineWave, effects::Echo, IntoShared};
 /// # use std::time::Duration;
-/// let sin = SineWave::new(1.0, 440.0);
+/// let sin = SineWave::new(AudioFormat::MONO_CD, 1.0, 440.0);
 /// let echo = Echo::new(sin, Duration::from_secs_f32(0.5), 0.8);
 /// ```
 pub struct Echo<S: AudioSource> {
@@ -44,10 +41,15 @@ impl<S: AudioSource> Echo<S> {
 }
 
 impl<S: AudioSource> AudioSource for Echo<S> {
+    fn format(&self) -> crate::AudioFormat {
+        self.source.format()
+    }
+
     #[instrument(name = "Echo::read", skip(self, buffer))]
-    fn read(&mut self, buffer: &mut AudioBuffer) -> ReadResult {
-        let delay: usize = (buffer.format.sample_rate as f32 * self.delay).ceil() as usize
-            * buffer.format.channels as usize;
+    fn read(&mut self, buffer: &mut [Sample]) -> ReadResult {
+        let format = self.source.format();
+        let delay: usize =
+            (format.sample_rate as f32 * self.delay).ceil() as usize * format.channels as usize;
         self.buffer.resize(delay, 0.0);
 
         let status = self.source.read(buffer);
@@ -55,7 +57,7 @@ impl<S: AudioSource> AudioSource for Echo<S> {
 
         echo(
             &mut self.buffer,
-            buffer.samples,
+            buffer,
             written,
             &mut self.position,
             delay,

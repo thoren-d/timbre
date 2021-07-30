@@ -1,7 +1,4 @@
-use crate::{
-    core::{AudioBuffer, AudioSource},
-    ReadResult,
-};
+use crate::{core::AudioSource, ReadResult, Sample};
 
 use tracing::instrument;
 
@@ -12,9 +9,9 @@ use tracing::instrument;
 ///
 /// # Examples
 /// ```
-/// # use timbre::{generators::SineWave, effects::HighPass, IntoShared};
+/// # use timbre::{AudioFormat, generators::SineWave, effects::HighPass, IntoShared};
 /// # use std::time::Duration;
-/// let sin = SineWave::new(1.0, 440.0);
+/// let sin = SineWave::new(AudioFormat::STEREO_CD, 1.0, 440.0);
 /// let high_pass = HighPass::new(sin, 4000.0);
 /// ```
 pub struct HighPass<S: AudioSource> {
@@ -44,20 +41,25 @@ impl<S: AudioSource> HighPass<S> {
 }
 
 impl<S: AudioSource> AudioSource for HighPass<S> {
+    fn format(&self) -> crate::AudioFormat {
+        self.source.format()
+    }
+
     #[instrument(name = "HighPass::read", skip(self, buffer))]
-    fn read(&mut self, buffer: &mut AudioBuffer) -> ReadResult {
+    fn read(&mut self, buffer: &mut [Sample]) -> ReadResult {
+        let format = self.source.format();
         let result = self.source.read(buffer);
         let written = result.read;
         if written == 0 {
             return result;
         }
-        self.buffer.resize(buffer.samples.len(), 0.0);
+        self.buffer.resize(buffer.len(), 0.0);
 
-        match buffer.format.channels {
+        match format.channels {
             1 => {
-                let dt = 1.0 / buffer.format.sample_rate as f32;
+                let dt = 1.0 / format.sample_rate as f32;
                 self.prev = filter_mono(
-                    &mut buffer.samples[..written],
+                    &mut buffer[..written],
                     &mut self.buffer[..written],
                     dt,
                     self.rc,
@@ -65,9 +67,9 @@ impl<S: AudioSource> AudioSource for HighPass<S> {
                 );
             }
             2 => {
-                let dt = 1.0 / buffer.format.sample_rate as f32;
+                let dt = 1.0 / format.sample_rate as f32;
                 self.prev = filter_stereo(
-                    &mut buffer.samples[..written],
+                    &mut buffer[..written],
                     &mut self.buffer[..written],
                     dt,
                     self.rc,

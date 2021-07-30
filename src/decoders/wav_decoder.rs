@@ -1,4 +1,4 @@
-use crate::{core::AudioBuffer, AudioFormat, AudioSource, Error, ReadResult};
+use crate::{AudioFormat, AudioSource, Error, ReadResult, Sample};
 
 use sdl2::{
     audio::{AudioFormatNum, AudioSpecWAV},
@@ -87,19 +87,20 @@ impl WavDecoder {
 }
 
 impl AudioSource for WavDecoder {
-    #[instrument(name = "WavDecoder::read", skip(self, buffer))]
-    fn read(&mut self, buffer: &mut AudioBuffer) -> ReadResult {
-        assert!(self.format == buffer.format);
+    fn format(&self) -> AudioFormat {
+        self.format
+    }
 
-        let samples = &mut buffer.samples;
+    #[instrument(name = "WavDecoder::read", skip(self, buffer))]
+    fn read(&mut self, buffer: &mut [Sample]) -> ReadResult {
         let remaining = self.data.len() - self.position;
 
-        if samples.len() <= remaining {
-            samples.copy_from_slice(&self.data[self.position..self.position + samples.len()]);
-            self.position += samples.len();
-            ReadResult::good(samples.len())
+        if buffer.len() <= remaining {
+            buffer.copy_from_slice(&self.data[self.position..self.position + buffer.len()]);
+            self.position += buffer.len();
+            ReadResult::good(buffer.len())
         } else {
-            samples[..remaining].copy_from_slice(&self.data[self.position..self.data.len()]);
+            buffer[..remaining].copy_from_slice(&self.data[self.position..self.data.len()]);
             self.position = self.data.len();
             ReadResult::finished(remaining)
         }

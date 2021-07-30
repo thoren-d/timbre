@@ -7,6 +7,28 @@ pub struct AudioFormat {
     pub sample_rate: u32,
 }
 
+impl AudioFormat {
+    pub const MONO_CD: AudioFormat = AudioFormat {
+        channels: 1,
+        sample_rate: 44100,
+    };
+
+    pub const MONO_DVD: AudioFormat = AudioFormat {
+        channels: 1,
+        sample_rate: 48000,
+    };
+
+    pub const STEREO_CD: AudioFormat = AudioFormat {
+        channels: 2,
+        sample_rate: 44100,
+    };
+
+    pub const STEREO_DVD: AudioFormat = AudioFormat {
+        channels: 2,
+        sample_rate: 48000,
+    };
+}
+
 /// Indicates the state of an [`AudioSource`](crate::AudioSource).
 #[derive(Debug, Eq, PartialEq)]
 pub enum StreamState {
@@ -50,24 +72,19 @@ impl ReadResult {
 
 pub type Sample = f32;
 
-/// Bundles an [`AudioFormat`](crate::AudioFormat) with a buffer containing
-/// audio data in that format.
-pub struct AudioBuffer<'a> {
-    pub samples: &'a mut [Sample],
-    pub format: AudioFormat,
-}
-
-impl<'a> AudioBuffer<'a> {
-    pub fn new(format: AudioFormat, samples: &'a mut [Sample]) -> Self {
-        AudioBuffer { format, samples }
-    }
-}
-
 /// Trait implemented to provide audio data to consumers.
 ///
 /// This is the center of this entire library. Almost everything
 /// is either an `AudioSource` or consumes an `AudioSource`.
 pub trait AudioSource {
+    /// Returns the format used by this audio source.
+    ///
+    /// # Returns
+    ///
+    /// An [`AudioFormat`](crate::AudioFormat) describing the sample rate
+    /// and number of channels provided by this `AudioSource`.
+    fn format(&self) -> AudioFormat;
+
     /// Consume audio data and attempt to fill the given buffer.
     ///
     /// # Returns
@@ -77,9 +94,8 @@ pub trait AudioSource {
     ///
     /// # Panics
     ///
-    /// May panic if the format of the buffer is incompatible
-    /// with this source or its upstream sources.
-    fn read(&mut self, buffer: &mut AudioBuffer) -> ReadResult;
+    /// May panic if `buffer.len()` is not a multiple of `format().channels`.
+    fn read(&mut self, buffer: &mut [Sample]) -> ReadResult;
 }
 
 pub type SharedAudioSource = Arc<Mutex<dyn AudioSource + Send>>;
@@ -99,7 +115,11 @@ impl<T: AudioSource + Send + 'static> IntoShared for T {
 }
 
 impl AudioSource for SharedAudioSource {
-    fn read(&mut self, buffer: &mut AudioBuffer) -> ReadResult {
+    fn format(&self) -> AudioFormat {
+        self.lock().unwrap().format()
+    }
+
+    fn read(&mut self, buffer: &mut [Sample]) -> ReadResult {
         self.lock().unwrap().read(buffer)
     }
 }
