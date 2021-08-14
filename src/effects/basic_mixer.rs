@@ -15,9 +15,9 @@ use tracing::instrument;
 /// # Examples
 /// ```
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// # use timbre::{AudioFormat, generators::SineWave, effects::BasicMixer, IntoShared};
-/// let sin1 = SineWave::new(AudioFormat::MONO_CD, 0.5, 440.0);
-/// let sin2 = SineWave::new(AudioFormat::MONO_CD, 0.5, 220.0);
+/// # use timbre::{generators::SineWave, effects::BasicMixer, IntoShared};
+/// let sin1 = SineWave::new(0.5, 440.0);
+/// let sin2 = SineWave::new(0.5, 220.0);
 ///
 /// let mut mixer = BasicMixer::new();
 /// let sin1 = mixer.add_source(sin1.into_shared());
@@ -82,8 +82,8 @@ impl BasicMixer {
     ///
     /// # Examples
     /// ```
-    /// # use timbre::{AudioFormat, effects::BasicMixer, generators::SineWave, IntoShared};
-    /// let sin = SineWave::new(AudioFormat::MONO_CD, 1.0, 440.0);
+    /// # use timbre::{effects::BasicMixer, generators::SineWave, IntoShared};
+    /// let sin = SineWave::new(1.0, 440.0);
     /// let mut mixer = BasicMixer::new();
     /// let sin = mixer.add_source(sin.into_shared());
     /// mixer.remove_source(sin);

@@ -6,9 +6,9 @@ use tracing::instrument;
 ///
 /// # Examples
 /// ```
-/// # use timbre::{AudioFormat, generators::SineWave, effects::Echo, IntoShared};
+/// # use timbre::{generators::SineWave, effects::Echo, IntoShared};
 /// # use std::time::Duration;
-/// let sin = SineWave::new(AudioFormat::MONO_CD, 1.0, 440.0);
+/// let sin = SineWave::new(1.0, 440.0);
 /// let echo = Echo::new(sin, Duration::from_secs_f32(0.5), 0.8);
 /// ```
 pub struct Echo<S: AudioSource> {

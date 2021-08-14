@@ -9,9 +9,9 @@ use tracing::instrument;
 ///
 /// # Examples
 /// ```
-/// # use timbre::{AudioFormat, generators::SineWave, effects::LowPass, IntoShared};
+/// # use timbre::{generators::SineWave, effects::LowPass, IntoShared};
 /// # use std::time::Duration;
-/// let sin = SineWave::new(AudioFormat::MONO_CD, 1.0, 440.0);
+/// let sin = SineWave::new(1.0, 440.0);
 /// let low_pass = LowPass::new(sin, 200.0);
 /// ```
 pub struct LowPass<S: AudioSource> {

@@ -20,7 +20,7 @@ fn bench_sinewave(c: &mut Criterion) {
                     sample_rate: SAMPLE_RATE as u32,
                 };
 
-                let mut sin_wave = SineWave::new(format, 1.0, 440.0);
+                let mut sin_wave = SineWave::with_format(format, 1.0, 440.0);
 
                 b.iter(|| {
                     sin_wave.read(&mut samples);

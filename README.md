@@ -44,7 +44,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     speaker.set_source(mixer.into_shared());
     speaker.resume();
 
-    std::thread::sleep(Duration::from_secs_f32(10.0));
+    // std::thread::sleep(Duration::from_secs_f32(120.0));
     Ok(())
 }
 ```
