@@ -81,10 +81,7 @@ impl Sdl2Output {
     /// # }
     /// ```
     pub fn new(subsystem: &sdl2::AudioSubsystem) -> Result<Self, Error> {
-        Sdl2Output::with_format(
-            subsystem,
-            AudioFormat::default(),
-        )
+        Sdl2Output::with_format(subsystem, AudioFormat::default())
     }
 
     /// Construct a new `Sdl2Output` with the specified format.

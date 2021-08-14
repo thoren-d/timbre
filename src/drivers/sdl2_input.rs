@@ -73,10 +73,7 @@ impl Sdl2Input {
     /// # }
     /// ```
     pub fn new(subsystem: &sdl2::AudioSubsystem) -> Result<Self, Error> {
-        Sdl2Input::with_format(
-            subsystem,
-            AudioFormat::default(),
-        )
+        Sdl2Input::with_format(subsystem, AudioFormat::default())
     }
 
     /// Construct a new `Sdl2Input` with the specified format.
