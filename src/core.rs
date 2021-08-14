@@ -8,25 +8,37 @@ pub struct AudioFormat {
 }
 
 impl AudioFormat {
+    /// Single-channel (mono) audio with CD quality sample rate (44.1 kHz).
     pub const MONO_CD: AudioFormat = AudioFormat {
         channels: 1,
         sample_rate: 44100,
     };
 
+    /// Single-channel (mono) audio with DVD quality sample rate (48 kHz).
     pub const MONO_DVD: AudioFormat = AudioFormat {
         channels: 1,
         sample_rate: 48000,
     };
 
+    /// Two-channel (stereo) audio with CD quality sample rate (44.1 kHz).
     pub const STEREO_CD: AudioFormat = AudioFormat {
         channels: 2,
         sample_rate: 44100,
     };
 
+    /// Two-channel (stereo) audio with DVD quality sample rate (48 kHz).
     pub const STEREO_DVD: AudioFormat = AudioFormat {
         channels: 2,
         sample_rate: 48000,
     };
+}
+
+impl Default for AudioFormat {
+    /// Returns the default [`AudioFormat`](crate::AudioFormat), currently
+    /// [`AudioFormat::STEREO_CD`](crate::AudioFormat::STEREO_CD).
+    fn default() -> Self {
+        AudioFormat::STEREO_CD
+    }
 }
 
 /// Indicates the state of an [`AudioSource`](crate::AudioSource).
