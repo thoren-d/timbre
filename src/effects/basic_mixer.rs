@@ -1,6 +1,6 @@
 use crate::{
-    core::{AudioBuffer, AudioSource, SharedAudioSource},
-    ReadResult,
+    core::{AudioSource, SharedAudioSource},
+    ReadResult, Sample,
 };
 
 use slotmap::{DefaultKey, DenseSlotMap};
@@ -72,6 +72,7 @@ impl BasicMixer {
     ///
     /// A key to be used in [`remove_source`](method.remove_source) to remove this source.
     pub fn add_source(&mut self, source: SharedAudioSource) -> BasicMixerSource {
+        assert!(self.sources.is_empty() || source.format() == self.format());
         BasicMixerSource {
             key: self.sources.insert(source),
         }
@@ -93,11 +94,15 @@ impl BasicMixer {
 }
 
 impl AudioSource for BasicMixer {
+    fn format(&self) -> crate::AudioFormat {
+        self.sources.iter().next().unwrap().1.format()
+    }
+
     #[instrument(name = "BasicMixer::read", skip(self, buffer))]
-    fn read(&mut self, buffer: &mut AudioBuffer) -> ReadResult {
+    fn read(&mut self, buffer: &mut [Sample]) -> ReadResult {
         if self.sources.is_empty() {
-            buffer.samples.iter_mut().for_each(|sample| *sample = 0.0);
-            return ReadResult::good(buffer.samples.len());
+            buffer.iter_mut().for_each(|sample| *sample = 0.0);
+            return ReadResult::good(buffer.len());
         }
 
         let mut iter = self.sources.iter_mut();
@@ -108,33 +113,25 @@ impl AudioSource for BasicMixer {
         } = first.lock().unwrap().read(buffer);
 
         for (_, source) in iter {
-            self.buffer.resize(buffer.samples.len(), 0.0);
+            self.buffer.resize(buffer.len(), 0.0);
 
-            {
-                let mut buffer = AudioBuffer {
-                    format: buffer.format,
-                    samples: &mut self.buffer[..],
-                };
-
-                let result = source.lock().unwrap().read(&mut buffer);
-                read = std::cmp::max(read, result.read);
-            }
+            let result = source.lock().unwrap().read(&mut self.buffer);
+            read = std::cmp::max(read, result.read);
 
             buffer
-                .samples
                 .iter_mut()
                 .zip(self.buffer.iter())
                 .for_each(|(a, b)| *a += *b);
         }
 
         if let Some(coef) = self.coefficient {
-            buffer.samples.iter_mut().for_each(|sample| *sample *= coef);
+            buffer.iter_mut().for_each(|sample| *sample *= coef);
         }
 
-        if read < buffer.samples.len() {
+        if read < buffer.len() {
             ReadResult::underrun(read)
         } else {
-            ReadResult::good(buffer.samples.len())
+            ReadResult::good(buffer.len())
         }
     }
 }

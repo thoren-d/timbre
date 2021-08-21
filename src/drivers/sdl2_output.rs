@@ -1,7 +1,4 @@
-use crate::{
-    core::{AudioBuffer, SharedAudioSource},
-    AudioFormat, Error, StreamState,
-};
+use crate::{core::SharedAudioSource, AudioFormat, Error, StreamState};
 
 use sdl2::audio::{AudioCallback, AudioFormatNum, AudioSpecDesired};
 use tracing::{info, instrument, warn};
@@ -13,24 +10,23 @@ struct Callback {
 
 impl AudioCallback for Callback {
     type Channel = f32;
-    #[instrument(name = "Sdl2Output::callback", skip(self, samples))]
-    fn callback(&mut self, samples: &mut [Self::Channel]) {
+    #[instrument(name = "Sdl2Output::callback", skip(self, buffer))]
+    fn callback(&mut self, buffer: &mut [Self::Channel]) {
         if let Some(source) = &self.source {
             let mut source = source.lock().unwrap();
 
-            let mut buffer = AudioBuffer::new(self.format, samples);
-            let result = source.read(&mut buffer);
+            let result = source.read(buffer);
 
             if result.state == StreamState::Underrun {
                 warn!("Underrun detected.");
             }
 
-            samples
+            buffer
                 .iter_mut()
                 .skip(result.read)
                 .for_each(|s| *s = AudioFormatNum::SILENCE);
         } else {
-            for sample in samples.iter_mut() {
+            for sample in buffer.iter_mut() {
                 *sample = AudioFormatNum::SILENCE;
             }
         }
@@ -85,13 +81,7 @@ impl Sdl2Output {
     /// # }
     /// ```
     pub fn new(subsystem: &sdl2::AudioSubsystem) -> Result<Self, Error> {
-        Sdl2Output::with_format(
-            subsystem,
-            AudioFormat {
-                channels: 2,
-                sample_rate: 44100,
-            },
-        )
+        Sdl2Output::with_format(subsystem, AudioFormat::default())
     }
 
     /// Construct a new `Sdl2Output` with the specified format.

@@ -1,7 +1,4 @@
-use crate::{
-    core::{AudioBuffer, SharedAudioSource},
-    AudioFormat, AudioSource, Error, ReadResult,
-};
+use crate::{core::SharedAudioSource, AudioFormat, AudioSource, Error, ReadResult, Sample};
 
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
@@ -76,13 +73,7 @@ impl Sdl2Input {
     /// # }
     /// ```
     pub fn new(subsystem: &sdl2::AudioSubsystem) -> Result<Self, Error> {
-        Sdl2Input::with_format(
-            subsystem,
-            AudioFormat {
-                channels: 2,
-                sample_rate: 44100,
-            },
-        )
+        Sdl2Input::with_format(subsystem, AudioFormat::default())
     }
 
     /// Construct a new `Sdl2Input` with the specified format.
@@ -175,11 +166,13 @@ impl Sdl2Input {
 }
 
 impl AudioSource for AudioSourceImpl {
-    #[instrument(name = "Sdl2Input::read", skip(self, buffer))]
-    fn read(&mut self, buffer: &mut AudioBuffer) -> ReadResult {
-        assert!(self.format == buffer.format);
-        let samples = &mut buffer.samples;
+    fn format(&self) -> AudioFormat {
+        self.format
+    }
 
+    #[instrument(name = "Sdl2Input::read", skip(self, buffer))]
+    fn read(&mut self, buffer: &mut [Sample]) -> ReadResult {
+        let samples = buffer;
         let mut buffer = self.buffer.lock().unwrap();
 
         let mut i: usize = 0;

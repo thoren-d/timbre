@@ -1,11 +1,12 @@
 use std::time::Duration;
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use timbre::AudioFormat;
 use timbre::{
     effects::{BasicMixer, Echo, HighPass, LowPass},
     prelude::*,
+    Sample,
 };
-use timbre::{AudioBuffer, AudioFormat};
 
 const WINDOW_SIZE: usize = 1024;
 const SAMPLE_RATE: usize = 44100;
@@ -17,12 +18,16 @@ struct DummySource {
 }
 
 impl AudioSource for DummySource {
-    fn read(&mut self, buffer: &mut AudioBuffer) -> timbre::ReadResult {
-        buffer
-            .samples
-            .iter_mut()
-            .for_each(|sample| *sample = self.number);
-        timbre::ReadResult::good(buffer.samples.len())
+    fn read(&mut self, buffer: &mut [Sample]) -> timbre::ReadResult {
+        buffer.iter_mut().for_each(|sample| *sample = self.number);
+        timbre::ReadResult::good(buffer.len())
+    }
+
+    fn format(&self) -> AudioFormat {
+        AudioFormat {
+            sample_rate: SAMPLE_RATE as u32,
+            channels: CHANNELS as u8,
+        }
     }
 }
 
@@ -33,21 +38,13 @@ fn bench_echo(c: &mut Criterion) {
             let mut samples = Vec::new();
             samples.resize(WINDOW_SIZE * CHANNELS, 0.0);
 
-            let mut buffer = AudioBuffer {
-                format: AudioFormat {
-                    channels: CHANNELS as u8,
-                    sample_rate: SAMPLE_RATE as u32,
-                },
-                samples: &mut samples[..],
-            };
-
             let source = DummySource {
                 number: black_box(0.5),
             };
             let mut echo = Echo::new(source, Duration::from_secs_f32(delay), 0.5);
 
             b.iter(|| {
-                echo.read(&mut buffer);
+                echo.read(&mut samples);
             });
             black_box(samples);
         });
@@ -64,20 +61,12 @@ fn bench_highpass(c: &mut Criterion) {
                 let mut samples = Vec::new();
                 samples.resize(WINDOW_SIZE * channels, 0.0);
 
-                let mut buffer = AudioBuffer {
-                    format: AudioFormat {
-                        channels: channels as u8,
-                        sample_rate: SAMPLE_RATE as u32,
-                    },
-                    samples: &mut samples[..],
-                };
-
                 let source = DummySource {
                     number: black_box(0.5),
                 };
                 let mut high_pass = HighPass::new(source, 1000.0);
                 b.iter(|| {
-                    high_pass.read(&mut buffer);
+                    high_pass.read(&mut samples);
                 });
                 black_box(samples);
             },
@@ -95,20 +84,12 @@ fn bench_lowpass(c: &mut Criterion) {
                 let mut samples = Vec::new();
                 samples.resize(WINDOW_SIZE * channels, 0.0);
 
-                let mut buffer = AudioBuffer {
-                    format: AudioFormat {
-                        channels: channels as u8,
-                        sample_rate: SAMPLE_RATE as u32,
-                    },
-                    samples: &mut samples[..],
-                };
-
                 let source = DummySource {
                     number: black_box(0.5),
                 };
                 let mut low_pass = LowPass::new(source, 1000.0);
                 b.iter(|| {
-                    low_pass.read(&mut buffer);
+                    low_pass.read(&mut samples);
                 });
                 black_box(samples);
             },
@@ -126,14 +107,6 @@ fn bench_composite(c: &mut Criterion) {
                 let mut samples = Vec::new();
                 samples.resize(WINDOW_SIZE * channels, 0.0);
 
-                let mut buffer = AudioBuffer {
-                    format: AudioFormat {
-                        channels: channels as u8,
-                        sample_rate: SAMPLE_RATE as u32,
-                    },
-                    samples: &mut samples[..],
-                };
-
                 let source = DummySource {
                     number: black_box(0.5),
                 };
@@ -143,7 +116,7 @@ fn bench_composite(c: &mut Criterion) {
                 let source = Echo::new(source, Duration::from_secs_f32(0.1), 0.5);
                 let mut source = Echo::new(source, Duration::from_secs_f32(0.05), 0.5);
                 b.iter(|| {
-                    source.read(&mut buffer);
+                    source.read(&mut samples);
                 });
                 black_box(samples);
             },
@@ -158,14 +131,6 @@ fn bench_basicmixer(c: &mut Criterion) {
             let mut samples = Vec::new();
             samples.resize(WINDOW_SIZE * CHANNELS, 0.0);
 
-            let mut buffer = AudioBuffer {
-                format: AudioFormat {
-                    channels: CHANNELS as u8,
-                    sample_rate: SAMPLE_RATE as u32,
-                },
-                samples: &mut samples[..],
-            };
-
             let source = DummySource {
                 number: black_box(0.5),
             };
@@ -176,7 +141,7 @@ fn bench_basicmixer(c: &mut Criterion) {
             }
 
             b.iter(|| {
-                basic_mixer.read(&mut buffer);
+                basic_mixer.read(&mut samples);
             });
             black_box(samples);
         });
